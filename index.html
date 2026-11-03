@@ -322,6 +322,7 @@ function missing(s) {
   }
   if (!s.maskine) m.push("model");
   if (!s.vand) m.push("vandforsyning");
+  if (s.maskine === "falcon" && s.vand && !["tank8", "fast"].includes(s.vand)) m.push("vandforsyning (Falcon: kun 8L tank eller fastvand)");
   if (!s.maelk) m.push("mælk");
   if (!s.kaffe.length) m.push("kaffetype");
   if (s.pris === null || s.pris <= 0) m.push("koppris");
@@ -500,31 +501,34 @@ function findWarnings(s) {
   if (s.maskine === "jura" && s.vand === "tank8") w.push("Kontrollér, at 8 L-vandtanken er kompatibel med Jura X10.");
   return w;
 }
-// Simonelli kræver fastvand: menuen viser kun dette valg på begge modeller.
-// Ved skift til en anden maskine får sælgeren alle muligheder tilbage.
+// Vandforsyning afhænger af maskinen: Falcon har kun 8L tank eller fastvand;
+// Simonelli kræver fastvand, mens øvrige modeller beholder alle valg.
 const almindeligeVandvalg = Array.from($("vand").options, o => o.cloneNode(true));
 let tidligereVandvalg = $("vand").value;
-let simonelliVandAktivt = false;
+let aktivVandGruppe = null;
 function opdaterVandvalg(maskine) {
-  const erSimonelli = maskine === "simonelli1" || maskine === "simonelli2";
-  if (erSimonelli === simonelliVandAktivt) return;
+  const gruppe = maskine === "simonelli1" || maskine === "simonelli2" ? "simonelli"
+    : maskine === "falcon" ? "falcon" : "øvrige";
+  if (gruppe === aktivVandGruppe) return;
   const menu = $("vand");
-  if (erSimonelli) {
-    tidligereVandvalg = menu.value;
-    const fastvand = document.createElement("option");
-    fastvand.value = "fast";
-    fastvand.textContent = "Fastvandstilslutning med BWT Filter";
+  const aktueltValg = menu.value;
+  if (aktivVandGruppe !== "simonelli") tidligereVandvalg = aktueltValg;
+
+  if (gruppe === "simonelli") {
+    const fastvand = almindeligeVandvalg.find(o => o.value === "fast").cloneNode(true);
     menu.replaceChildren(fastvand);
     menu.value = "fast";
     menu.disabled = true;
     menu.title = "Simonelli kan kun tilsluttes fast vand.";
   } else {
-    menu.replaceChildren(...almindeligeVandvalg.map(o => o.cloneNode(true)));
-    menu.value = tidligereVandvalg;
+    const tilladteValg = gruppe === "falcon" ? ["", "tank8", "fast"] : ["", "tank", "tank8", "fast"];
+    menu.replaceChildren(...almindeligeVandvalg.filter(o => tilladteValg.includes(o.value)).map(o => o.cloneNode(true)));
+    const ønsketValg = aktivVandGruppe === "simonelli" ? tidligereVandvalg : aktueltValg;
+    menu.value = tilladteValg.includes(ønsketValg) ? ønsketValg : "";
     menu.disabled = false;
     menu.removeAttribute("title");
   }
-  simonelliVandAktivt = erSimonelli;
+  aktivVandGruppe = gruppe;
 }
 function update() {
   opdaterVandvalg($("maskine").value);
