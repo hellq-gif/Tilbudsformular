@@ -76,6 +76,26 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; }
 .blok { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 [hidden] { display: none !important; }
+.estimat-box { padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:6px; font-size:14px; }
+.estimat-box strong { font-weight:700; }
+.estimat-box small { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
+.warnings { padding:12px 14px; border:1px solid #E7BD75; background:var(--warn-bg); color:var(--warn-ink); border-radius:6px; font-size:13px; }
+.warnings strong { display:block; margin-bottom:3px; }
+.warnings ul { margin:4px 0 0; padding-left:18px; }
+.warnings li + li { margin-top:4px; }
+@page { size:A4; margin:10mm; }
+@media print {
+  html, body { width:100%; margin:0 !important; padding:0 !important; background:#fff !important; }
+  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  .page { display:block !important; width:100%; max-width:none !important; margin:0; padding:0; }
+  header, form, .bar { display:none !important; }
+  .grid, .side { display:block !important; width:100%; }
+  .previewwrap { border:0 !important; border-radius:0; overflow:visible !important; width:100%; }
+  #preview { min-width:0 !important; width:100%; }
+  #preview > table { width:100% !important; }
+  #preview > table > tbody > tr > td { padding:0 !important; }
+  #preview img { max-width:100%; }
+}
 </style>
 
 <div class="page">
@@ -124,11 +144,13 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <div id="maskine-pris" class="blok">
           <div class="row">
             <div class="field"><label for="pris">Koppris <small>(kr.)</small></label><input type="text" id="pris" inputmode="decimal" value="3,50" autocomplete="off"></div>
-            <div class="field"><label for="drikkere">Kaffedrikkere <small>(valgfri)</small></label><input type="text" id="drikkere" inputmode="numeric" value="20" autocomplete="off"></div>
+            <div class="field"><label for="drikkere">Kaffedrikkere <small>(2 decimaler muligt)</small></label><input type="text" id="drikkere" inputmode="numeric" value="10" autocomplete="off" placeholder="fx 6,66"></div>
           </div>
+          <div class="estimat-box" aria-live="polite">Estimeret forbrug: <strong id="estimat">600 kopper pr. måned</strong><small>1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.</small></div>
           <div class="field"><label for="model">Betaling</label>
             <select id="model"><option value="min" selected>Minimumsforbrug pr. måned</option><option value="fast">Fast betaling efter estimeret forbrug</option></select></div>
-          <div class="field"><label for="kopper">Kopper pr. måned</label><input type="text" id="kopper" inputmode="numeric" value="100" autocomplete="off"></div>
+          <div class="field" id="minimum-kopper"><label for="kopper">Minimumskopper pr. måned</label><input type="text" id="kopper" inputmode="numeric" value="100" autocomplete="off"></div>
+          <label class="check"><input type="checkbox" id="vis-maanedspris"> Vis månedligt beløb i tilbuddet</label>
         </div>
         <div id="aftale-pris" class="blok" hidden>
           <div class="row">
@@ -148,13 +170,13 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
             <label class="check"><input type="checkbox" id="a-maelk"> Mælkepulver</label>
           </fieldset>
         </div>
-        <div class="field"><label for="periode">Aftaleperiode <small>(antal måneder)</small></label><input type="text" id="periode" inputmode="numeric" value="36" autocomplete="off"></div>
+        <div class="field"><label for="periode">Aftaleperiode <small>(antal måneder)</small></label><input type="text" id="periode" inputmode="numeric" value="60" autocomplete="off"></div>
         <label class="check"><input type="checkbox" id="ingenper"> Nævn ikke aftaleperiode</label>
       </fieldset>
 
       <fieldset>
         <legend>Mailen</legend>
-        <div class="field"><label for="intro">Indledning</label><textarea id="intro">Tak for en rigtig god snak. Det var en fornøjelse at høre mere om jeres behov. Som lovet har jeg samlet et tilbud, så I kan se, hvad løsningen indeholder.</textarea></div>
+        <div class="field"><label for="intro">Indledning</label><textarea id="intro">Tak for en god snak. Som lovet kommer her et samlet og overskueligt oplæg på en professionel kaffeløsning fra os 🙂</textarea></div>
         <div class="field"><label for="udloeb">Udløbsdato <small>(valgfri, vises nederst i tilbuddet)</small></label><input type="date" id="udloeb"></div>
         <div class="field"><label for="mail">Svar-adresse <small>(knappen i mailen)</small></label><input type="email" id="mail" value="lb@blackbirdcoffee.dk" autocomplete="off"></div>
       </fieldset>
@@ -163,10 +185,12 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="side">
       <div class="bar">
         <p class="status" id="status" role="status" aria-live="polite"></p>
+        <div class="warnings" id="advarsler" role="note" hidden></div>
         <div class="buttons">
           <button type="button" class="primary" id="copy">Kopiér tilbud</button>
+          <button type="button" class="secondary" id="pdf">Eksportér PDF</button>
         </div>
-        <p class="hint">Sæt tilbuddet ind i en ny mail med Cmd+V.</p>
+        <p class="hint">Indsæt det kopierede tilbud i Outlook med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.</p>
       </div>
       <div class="previewwrap"><div id="preview"></div></div>
     </div>
@@ -195,6 +219,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
 const fmt2 = (n) => n.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtAntal = (n) => n.toLocaleString("da-DK", { maximumFractionDigits: 2 });
 const fmtKr = (n) => (Math.round(n * 100) % 100 === 0 ? Math.round(n).toLocaleString("da-DK") : fmt2(n));
 const joinOg = (a) => (a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " og " + a[a.length - 1]);
 
@@ -228,6 +253,8 @@ function read() {
     firma: $("firma").value.trim(), navn: $("navn").value.trim(), maskine: $("maskine").value,
     vand: $("vand").value, maelk: $("maelk").value, kakao: $("kakao").checked,
     pris: num($("pris").value), drikkere: num($("drikkere").value), model: $("model").value,
+    estimeret: num($("drikkere").value) === null ? null : Math.round(num($("drikkere").value) * 60),
+    visMaanedspris: $("vis-maanedspris").checked,
     kopper: num($("kopper").value), periode: num($("periode").value), ingenper: $("ingenper").checked,
     intro: $("intro").value.trim(), mail: $("mail").value.trim(), udloeb: $("udloeb").value
   };
@@ -251,7 +278,8 @@ function missing(s) {
   if (!s.maelk) m.push("mælk");
   if (!s.kaffe.length) m.push("kaffetype");
   if (s.pris === null || s.pris <= 0) m.push("koppris");
-  if (s.kopper === null || s.kopper <= 0) m.push("kopper pr. måned");
+  if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
+  if (s.model === "min" && (s.kopper === null || s.kopper <= 0)) m.push("minimumskopper pr. måned");
   if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode (eller afkryds, at den ikke skal nævnes)");
   if (!s.mail) m.push("svar-adresse");
   return m;
@@ -323,15 +351,18 @@ function buildEmail(s) {
 
   const prisTxt = s.pris ? fmt2(s.pris) : "[Koppris]";
   const kopper = s.kopper ? Math.round(s.kopper).toLocaleString("da-DK") : "[antal]";
-  const betaling = s.pris && s.kopper ? fmtKr(s.pris * s.kopper) : "[beløb]";
+  const estimeret = s.estimeret !== null && s.estimeret > 0 ? s.estimeret.toLocaleString("da-DK") : "[antal]";
+  const aktivtAntal = s.model === "fast" ? s.estimeret : s.kopper;
+  const betaling = s.pris && aktivtAntal ? fmtKr(s.pris * aktivtAntal) : "[beløb]";
+  const tillæg = s.visMaanedspris ? `, svarende til ${s.model === "fast" ? "en månedlig betaling" : "en minimumsbetaling"} på ${betaling} kr. pr. måned` : "";
   const modelLine = s.model === "fast"
-    ? `Fast betaling efter et estimeret forbrug på ${kopper} kopper pr. måned, svarende til ${betaling} kr. pr. måned.`
-    : `Minimumsforbrug: ${kopper} kopper pr. måned, svarende til en minimumsbetaling på ${betaling} kr. pr. måned.`;
+    ? `Fast betaling baseret på et estimeret forbrug på ${estimeret} kopper pr. måned${tillæg}.`
+    : `Med vores koncept betaler I for jeres faktiske forbrug, dog med et minimum på ${kopper} kopper pr. måned${tillæg}.`;
   const mdr = s.periode !== null && s.periode > 0 ? Math.round(s.periode) : null;
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
 
   const lines = [priceLine(`Prisen inkluderer ${joinOg(incl)}.`)];
-  if (s.drikkere) lines.push(priceLine(`Prisen er beregnet ud fra ${Math.round(s.drikkere)} kaffedrikkere.`));
+  if (s.drikkere) lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} kaffedrikkere.`));
   if (periodeLine) lines.push(priceLine(modelLine), priceLine(periodeLine, true));
   else lines.push(priceLine(modelLine, true));
 
@@ -349,7 +380,7 @@ ${para(esc(m ? m.desc : "[Vælg model]"))}
 <tr><td style="padding:18px 40px 0 40px;font-family:${FONT};font-size:13px;line-height:18px;letter-spacing:1px;text-transform:uppercase;color:#6F4529;">Inkluderet ekstraudstyr</td></tr>
 ${para(esc(equip.join(" · ")), "4px 40px 0 40px")}
 ${h2("Kaffen")}
-${para((s.kaffe.includes("Early Bird") ? "Vores favoritbønne er Early Bird, 100 % Arabica. " : "") + "Jeres kaffe: " + (s.kaffe.length ? joinOg(s.kaffe) : "[vælg kaffetype]") + ". I kan frit skifte mellem alle vores kaffevarianter fra levering til levering.")}
+${para((s.kaffe.includes("Early Bird") ? "Vores favoritbønne er Early Bird, 100 % Arabica. " : "") + "Jeres kaffe: " + (s.kaffe.length ? joinOg(s.kaffe) : "[vælg kaffetype]") + ". I kan frit skifte mellem alle vores kaffevarianter fra levering til levering. Kaffen friskristes i Roskilde tæt på levering.")}
 ${s.kaffe.map(beanRow).join("")}
 ${s.kakao ? kakaoRow() : ""}
 ${h2("Service og drift", 32)}
@@ -384,6 +415,18 @@ function setStatus(text, kind) {
   el.textContent = text;
   el.className = "status" + (kind ? " " + kind : "");
 }
+function findWarnings(s) {
+  const w = [];
+  if (s.type !== "maskine") return w;
+  if (s.estimeret !== null && s.estimeret > 0 && s.estimeret < 100) w.push("Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.");
+  if (s.model === "min" && s.kopper !== null && s.kopper > 0 && s.kopper < 100) w.push("Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.");
+  if (s.model === "min" && s.estimeret !== null && s.kopper !== null && s.kopper > s.estimeret) w.push("Minimumsforbruget er højere end det estimerede forbrug.");
+  if (!s.ingenper && (s.periode === null || s.periode <= 0)) w.push("Aftaleperioden mangler.");
+  if (s.ingenper) w.push("Aftaleperioden skjules i tilbuddet. Kontrollér, at den er aftalt med kunden.");
+  if (s.maskine === "jura" && s.kakao) w.push("Kontrollér kompatibiliteten mellem Jura X10 og den valgte kakaoløsning.");
+  if (s.maskine === "jura" && s.vand === "tank8") w.push("Kontrollér, at 8 L-vandtanken er kompatibel med Jura X10.");
+  return w;
+}
 function update() {
   const s = read();
   const a = s.type === "aftale";
@@ -391,10 +434,24 @@ function update() {
   $("maskine-pris").hidden = a;
   $("aftale-pris").hidden = !a;
   $("periode").disabled = s.ingenper;
+  $("minimum-kopper").hidden = a || s.model !== "min";
+  $("estimat").textContent = s.estimeret === null || s.estimeret <= 0 ? "–" : s.estimeret.toLocaleString("da-DK") + " kopper pr. måned";
+  const warnings = findWarnings(s);
+  const warningBox = $("advarsler");
+  warningBox.hidden = warnings.length === 0;
+  warningBox.replaceChildren();
+  if (warnings.length) {
+    const heading = document.createElement("strong");
+    heading.textContent = "Kontrollér før afsendelse:";
+    const list = document.createElement("ul");
+    warnings.forEach((warning) => { const li = document.createElement("li"); li.textContent = warning; list.appendChild(li); });
+    warningBox.append(heading, list);
+  }
   $("preview").innerHTML = buildEmail(s);
   const miss = missing(s);
   const ready = miss.length === 0;
   $("copy").disabled = !ready;
+  $("pdf").disabled = !ready;
   if (!ready) setStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
   else setStatus("Alt er udfyldt. Tilbuddet er klar til at kopiere.", "ok");
 }
@@ -432,8 +489,16 @@ $("copy").addEventListener("click", async () => {
   if (await copyRich()) flash("Tilbuddet er kopieret. Sæt det ind i en ny mail.", "ok");
   else flash("Kopiering blev afvist her. Markér tilbuddet i udkastet og tryk Cmd+C.", "err");
 });
+$("pdf").addEventListener("click", () => {
+  if (missing(read()).length) return;
+  window.print(); // Vælg “Gem som PDF” i browserens udskriftsdialog.
+});
 $("reset").addEventListener("click", () => {
-  ["firma", "navn", "pris", "drikkere", "periode"].forEach((id) => { $(id).value = ""; });
+  ["firma", "navn"].forEach((id) => { $(id).value = ""; });
+  $("pris").value = "3,50";
+  $("drikkere").value = "10";
+  $("periode").value = "60";
+  $("vis-maanedspris").checked = false;
   ["maskine", "vand", "maelk"].forEach((id) => { $(id).value = ""; });
   $("kakao").checked = false;
   $("ingenper").checked = false;
