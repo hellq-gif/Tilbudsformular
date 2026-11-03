@@ -484,7 +484,90 @@ function update() {
   $("minimum-kopper").hidden = a || s.model !== "min";
   const semi = s.maskine.startsWith("simonelli");
   $("semi-accessories").hidden = a || !semi;
-  document.querySelectorAll(".machine-card").forEach((card) => {
+  
+// Bevar ORIGINALFOTOET af The Falcon. Kun den sølvfarvede kabinetfinish
+// omfarves til sort. Maskinen, skærmen, vinklen og den transparente baggrund
+// ændres ikke. Det endelige PNG-billede bruges også ved kopiering til Outlook.
+function recolorOriginalFalcon() {
+  const original = new Image();
+  original.onload = () => {
+    const w = original.naturalWidth, h = original.naturalHeight;
+    // Billedudsnittene er målt på det oprindelige 780 × 725-produktfoto.
+    if (w !== 780 || h !== 725) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    ctx.drawImage(original, 0, 0);
+    const img = ctx.getImageData(0, 0, w, h);
+    const maskCanvas = document.createElement("canvas");
+    maskCanvas.width = w; maskCanvas.height = h;
+    const m = maskCanvas.getContext("2d");
+    if (!m) return;
+    const poly = (context, vertices) => {
+      context.beginPath();
+      vertices.forEach(([x,y], i) => i ? context.lineTo(x,y) : context.moveTo(x,y));
+      context.closePath(); context.fill();
+    };
+    m.fillStyle = "#fff";
+    // Frontstykket, den nederste serviceklap og højre sidepanel.
+    poly(m, [[196,371],[422,369],[452,236],[452,499],[196,499]]);
+    poly(m, [[196,499],[452,502],[453,626],[197,624]]);
+    poly(m, [[451,232],[619,243],[620,619],[452,659]]);
+    // De blanke metaldele på selve udløbet skal fortsat være metal.
+    m.globalCompositeOperation = "destination-out";
+    m.fillStyle = "#000";
+    poly(m, [[221,407],[237,407],[238,464],[224,464]]);
+    poly(m, [[256,408],[334,408],[338,448],[256,448]]);
+    poly(m, [[258,446],[350,448],[347,478],[259,478]]);
+    m.globalCompositeOperation = "source-over";
+    const blur = (source) => {
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const x = c.getContext("2d");
+      x.filter = "blur(1.1px)";
+      x.drawImage(source, 0, 0);
+      return x.getImageData(0, 0, w, h).data;
+    };
+    const mask = blur(maskCanvas);
+    const d = img.data;
+    const clamp01 = x => Math.max(0, Math.min(1, x));
+    for (let i = 0; i < d.length; i += 4) {
+      const light = .299*d[i] + .587*d[i+1] + .114*d[i+2];
+      const strength = clamp01((light-37)/25) * (mask[i+3]/255) * (d[i+3]/255);
+      if (strength === 0) continue;
+      const charcoal = Math.min(85, 9 + light*.232);
+      for (let c = 0; c < 3; c++) {
+        const tint = [0.96, 0.98, 1.00][c];
+        d[i+c] = d[i+c]*(1-strength) + charcoal*tint*strength;
+      }
+    }
+    // Mørkn den sølvfarvede kant ved drypbakken, men behold metalglansen.
+    const tray = document.createElement("canvas");
+    tray.width = w; tray.height = h;
+    const t = tray.getContext("2d");
+    t.fillStyle = "rgba(255,255,255,0.82)";
+    poly(t, [[146,635],[392,633],[405,640],[406,660],[144,651]]);
+    const trayMask = blur(tray);
+    for (let i = 0; i < d.length; i += 4) {
+      const light = .299*d[i] + .587*d[i+1] + .114*d[i+2];
+      const strength = clamp01((light-65)/60) * (trayMask[i+3]/255) * (d[i+3]/255);
+      if (strength === 0) continue;
+      for (let c = 0; c < 3; c++) {
+        d[i+c] = d[i+c]*(1-strength) + (30+light*.30)*strength;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    try {
+      IMG.falcon = canvas.toDataURL("image/png");
+      document.querySelectorAll('[data-product-img="falcon"]').forEach(el => { el.src = IMG.falcon; });
+      update(); // Tilbudsvisningen bruger dermed nøjagtigt samme sorte billede.
+    } catch(e) { /* Behold originalen, hvis browseren afviser billedbehandling. */ }
+  };
+  original.src = IMG.falcon;
+}
+
+document.querySelectorAll(".machine-card").forEach((card) => {
     card.setAttribute("aria-pressed", String(card.dataset.machine === s.maskine));
   });
   $("machine-note").textContent = semi ? "Semiautomatisk løsning: manuelt bryg og mælkeskum. Husk kværn og fast vandtilslutning."
@@ -577,4 +660,5 @@ $("reset").addEventListener("click", () => {
   $("firma").focus();
 });
 update();
+recolorOriginalFalcon();
 </script>
