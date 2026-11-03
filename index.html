@@ -226,9 +226,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="warnings" id="advarsler" role="note" hidden></div>
         <div class="buttons">
           <button type="button" class="primary" id="copy">Kopiér tilbud</button>
+          <button type="button" class="secondary" id="copy-outlook">Kopiér + åbn Outlook</button>
           <button type="button" class="secondary" id="pdf">Eksportér PDF</button>
         </div>
-        <p class="hint">Indsæt det kopierede tilbud i Outlook med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.</p>
+        <p class="hint">“Kopiér + åbn Outlook” kopierer tilbuddet og åbner en ny mail med emnet udfyldt i dit standardmailprogram. Indsæt med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.</p>
       </div>
       <div class="previewwrap"><div id="preview"></div></div>
     </div>
@@ -598,6 +599,7 @@ document.querySelectorAll(".machine-card").forEach((card) => {
   const miss = missing(s);
   const ready = miss.length === 0;
   $("copy").disabled = !ready;
+  $("copy-outlook").disabled = !ready;
   $("pdf").disabled = !ready;
   if (periodeForKort(s)) setStatus("Aftaleperiode kan ikke være under 12 måneder", "warn");
   else if (!ready) setStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
@@ -649,6 +651,17 @@ $("copy").addEventListener("click", async () => {
   if (missing(read()).length) return;
   if (await copyRich()) flash("Tilbuddet er kopieret. Sæt det ind i en ny mail.", "ok");
   else flash("Kopiering blev afvist her. Markér tilbuddet i udkastet og tryk Cmd+C.", "err");
+});
+// Kopiér HTML-tilbuddet, og åbn en ny mail i operativsystemets standardmailprogram.
+// mailto: kan udfylde emnefeltet, men ikke overføre HTML-formateringen til mailens body.
+$("copy-outlook").addEventListener("click", async () => {
+  if (missing(read()).length) return;
+  if (!await copyRich()) {
+    flash("Kopiering blev afvist. Brug i stedet Kopiér tilbud.", "err");
+    return;
+  }
+  flash("Tilbuddet er kopieret. Indsæt det i den nye mail med Ctrl+V.", "ok");
+  window.location.href = "mailto:?subject=" + encodeURIComponent("Tilbud fra Blackbird Coffee ☕");
 });
 $("pdf").addEventListener("click", () => {
   if (missing(read()).length) return;
