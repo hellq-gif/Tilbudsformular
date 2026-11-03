@@ -448,7 +448,7 @@ ${remotePara("Maskinen kan desuden fjernstyres af vores serviceafdeling.")}
 ${remotePara("Hvis I eksempelvis får en ny størrelse kopper, ønsker en stærkere Americano eller vil have temperaturen justeret, kan vi klare det over telefonen inden for få minutter – uden behov for et teknikerbesøg.", true)}`;
   const mainMaskine = `${machineRow}
 ${h2("1 × " + esc(m ? m.name : "[Model]"), 32)}
-${para(["swan", "falcon"].includes(s.maskine) && m ? esc(m.desc).replace(". Maskinen tilbyder", ".<br>Maskinen tilbyder") : esc(m ? m.desc : "[Vælg model]"))}
+${para(["swan", "falcon"].includes(s.maskine) && m ? esc(m.desc).replace(". Maskinen tilbyder", ".<br><br>Maskinen tilbyder") : esc(m ? m.desc : "[Vælg model]"))}
 <tr><td style="padding:18px 40px 0 40px;font-family:${FONT};font-size:16px;line-height:22px;letter-spacing:0.6px;text-transform:uppercase;font-weight:700;color:#6F4529;"><strong style="font-family:${FONT};font-size:16px;line-height:22px;font-weight:700;">Inkluderet ekstraudstyr</strong></td></tr>
 ${para(esc(equip.join(" • ")), "4px 40px 0 40px")}
 ${h2("Kaffen")}
