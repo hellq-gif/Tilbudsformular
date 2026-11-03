@@ -18,7 +18,7 @@
   --warn-bg: #FFF1E6;
   --warn-ink: #8A3D0C;
   --ok: #2F6B3A;
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font: "Aptos", "Segoe UI", Calibri, Arial, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -256,8 +256,8 @@ const MACH = {
   simonelli1: { name: "Nuova Simonelli Appia Life – 1 gruppe", desc: "Professionel semiautomatisk espressomaskine med én bryggruppe og volumetrisk dosering. Espresso og mælkedrikke tilberedes manuelt med portafilter og steamarm – et kompakt setup til den ægte baristaoplevelse." },
   simonelli2: { name: "Nuova Simonelli Appia Life – 2 grupper", desc: "Professionel semiautomatisk espressomaskine med to bryggrupper og volumetrisk dosering. Til travle kaffemiljøer, hvor en barista brygger espresso og tilbereder mælkedrikke manuelt med portafilter og steamarm." }
 };
-const FONT = "Arial, Helvetica, sans-serif";
-const SERIF = "Georgia, 'Times New Roman', serif";
+const FONT = "'Aptos', 'Segoe UI', Calibri, Arial, sans-serif";
+const HEADING_FONT = FONT;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
@@ -274,13 +274,13 @@ const KAFFE = [
   { id: "kaffe-bw", name: "Black Wings", img: "bw", scores: [5, 5, 2],
     desc: "Flyv højt med Black Wings, vores kraftfulde mørkristede 100% Arabica-kaffe fra Syd- og Mellemamerika. Denne dybt aromatiske kaffe har en fyldig, rig krop og intense noter af mørk chokolade. Ideel til at nyde alene eller som base i mælkedrikke som Caffe Latte, hvor dens dybde virkelig skinner igennem." }
 ];
-const maelkepulverRow = () => `<tr><td style="padding:16px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:14px 0 0 0;"><div style="font-family:${SERIF};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Mælkepulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Lys&amp;Fyldig mælkepulver</div></td></tr></table></td></tr>`;
-const kakaoRow = () => `<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:16px 0 0 0;"><div style="font-family:${SERIF};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Kakaopulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Cremet&amp;Sød kakaopulver</div></td></tr></table></td></tr>`;
+const maelkepulverRow = () => `<tr><td style="padding:16px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:14px 0 0 0;"><div style="font-family:${HEADING_FONT};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Mælkepulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Lys&amp;Fyldig mælkepulver</div></td></tr></table></td></tr>`;
+const kakaoRow = () => `<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:16px 0 0 0;"><div style="font-family:${HEADING_FONT};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Kakaopulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Cremet&amp;Sød kakaopulver</div></td></tr></table></td></tr>`;
 const beanRow = (name) => {
   const k = KAFFE.find((x) => x.name === name);
   if (!k) return "";
   const [r, f, sy] = k.scores;
-  return `<tr><td style="padding:16px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="110" valign="top" style="padding:8px 0;"><img src="${IMG[k.img]}" width="94" alt="${esc(k.name)}" style="display:block;border:0;width:94px;height:auto;"></td><td valign="top" style="padding:4px 0 0 20px;"><div style="font-family:${SERIF};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">${esc(k.name)}</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">${esc(k.desc)}</div><div style="font-family:${FONT};font-size:12px;line-height:18px;color:#6B5A4A;padding-top:8px;">Ristning ${r}/5 · Fylde ${f}/5 · Syre ${sy}/5</div></td></tr></table></td></tr>`;
+  return `<tr><td style="padding:16px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="110" valign="top" style="padding:8px 0;"><img src="${IMG[k.img]}" width="94" alt="${esc(k.name)}" style="display:block;border:0;width:94px;height:auto;"></td><td valign="top" style="padding:4px 0 0 20px;"><div style="font-family:${HEADING_FONT};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">${esc(k.name)}</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">${esc(k.desc)}</div><div style="font-family:${FONT};font-size:12px;line-height:18px;color:#6B5A4A;padding-top:8px;">Ristning ${r}/5 · Fylde ${f}/5 · Syre ${sy}/5</div></td></tr></table></td></tr>`;
 };
 const FORMATER = [
   { id: "fmt-1kg", label: "Hele bønner i 1 kg poser" },
@@ -333,7 +333,7 @@ function missing(s) {
   return m;
 }
 
-const h2 = (t, top) => `<tr><td style="padding:${top || 32}px 40px 10px 40px;font-family:${SERIF};font-size:24px;line-height:30px;color:#2B1D14;">${t}</td></tr>`;
+const h2 = (t, top) => `<tr><td style="padding:${top || 32}px 40px 10px 40px;font-family:${HEADING_FONT};font-size:24px;line-height:30px;color:#2B1D14;">${t}</td></tr>`;
 const para = (t, pad) => `<tr><td style="padding:${pad || "0 40px 0 40px"};font-family:${FONT};font-size:15px;line-height:24px;color:#4A3A2E;">${t}</td></tr>`;
 const bullet = (t) => `<tr><td width="30" valign="top" style="padding:3px 0 8px 0;"><img src="${IMG.bird}" width="18" height="19" alt="" style="display:block;border:0;"></td><td valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:15px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
 const checkBullet = (t) => `<tr><td width="30" valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:16px;line-height:22px;font-weight:bold;color:#6F4529;">&#10003;</td><td valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:15px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
@@ -365,7 +365,7 @@ ${h2("Kaffen")}
 ${para(kaffeTxt)}
 ${s.kaffe.map(beanRow).join("")}
 ${s.akakao ? kakaoRow() : ""}
-${s.amaelk ? `<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:16px 0 0 0;"><div style="font-family:${SERIF};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Mælkepulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Lys&amp;Fyldig mælkepulver</div></td></tr></table></td></tr>` : ""}
+${s.amaelk ? `<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:16px 0 0 0;"><div style="font-family:${HEADING_FONT};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Mælkepulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Lys&amp;Fyldig mælkepulver</div></td></tr></table></td></tr>` : ""}
 ${h2("Levering")}
 ${para(`Som udgangspunkt sender vi bønnerne løbende, baseret på det aftalte månedlige forbrugsestimat på ${kgM} kg. Har I for meget eller for lidt på lager, giver I blot besked, så sætter vi forsendelserne på pause eller justerer dem. Dog er I forpligtet til at aftage den forventede mængde.`, "0 40px 12px 40px")}
 ${para("Kaffen fås som:", "0 40px 10px 40px")}
@@ -373,7 +373,7 @@ ${para("Kaffen fås som:", "0 40px 10px 40px")}
 ${mørkNote}
 <tr><td style="padding:32px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F6F1EA" style="background-color:#F6F1EA;">
 <tr><td style="padding:28px 32px 6px 32px;font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.5px;text-transform:uppercase;color:#6F4529;">Pris</td></tr>
-<tr><td style="padding:0 32px 12px 32px;font-family:${SERIF};font-size:40px;line-height:46px;color:#2B1D14;">${pris} kr. <span style="font-size:18px;color:#4A3A2E;">pr. kg</span></td></tr>
+<tr><td style="padding:0 32px 12px 32px;font-family:${HEADING_FONT};font-size:40px;line-height:46px;color:#2B1D14;">${pris} kr. <span style="font-size:18px;color:#4A3A2E;">pr. kg</span></td></tr>
 ${lines}
 </table></td></tr>
 `;
@@ -457,7 +457,7 @@ ${h2("Service og drift", 32)}
 ${remoteSection}
 <tr><td style="padding:32px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F6F1EA" style="background-color:#F6F1EA;">
 <tr><td style="padding:28px 32px 6px 32px;font-family:${FONT};font-size:12px;line-height:16px;letter-spacing:1.5px;text-transform:uppercase;color:#6F4529;">Pris</td></tr>
-<tr><td style="padding:0 32px 12px 32px;font-family:${SERIF};font-size:40px;line-height:46px;color:#2B1D14;">${prisTxt} kr. <span style="font-size:18px;color:#4A3A2E;">pr. kop</span></td></tr>
+<tr><td style="padding:0 32px 12px 32px;font-family:${HEADING_FONT};font-size:40px;line-height:46px;color:#2B1D14;">${prisTxt} kr. <span style="font-size:18px;color:#4A3A2E;">pr. kop</span></td></tr>
 ${lines.join("\n")}
 </table></td></tr>
 `;
@@ -466,7 +466,7 @@ ${lines.join("\n")}
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#EFEAE3" style="background-color:#EFEAE3;"><tr><td align="center" style="padding:32px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:600px;max-width:600px;background-color:#FFFFFF;">
 <tr><td style="padding:28px 40px 26px 40px;border-bottom:1px solid #E6DED3;"><img src="${IMG.logoEmail}" width="194" height="74" alt="Blackbird Coffee" style="display:block;width:194px;height:74px;border:0;outline:none;text-decoration:none;"></td></tr>
-<tr><td style="padding:34px 40px 20px 40px;font-family:${SERIF};font-size:32px;line-height:38px;color:#6F4529;">Tilbud til ${esc(firma)}</td></tr>
+<tr><td style="padding:34px 40px 20px 40px;font-family:${HEADING_FONT};font-size:32px;line-height:38px;color:#6F4529;">Tilbud til ${esc(firma)}</td></tr>
 ${para("Hej " + esc(navn) + ",", "0 40px 14px 40px")}
 ${para(esc(s.intro).replace(/\n/g, "<br>"))}
 ${MAIN}
