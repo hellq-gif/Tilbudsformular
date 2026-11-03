@@ -557,7 +557,7 @@ document.querySelectorAll(".machine-card").forEach((card) => {
   $("copy").disabled = !ready;
   $("pdf").disabled = !ready;
   if (!ready) setStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
-  else setStatus("Alt er udfyldt. Tilbuddet er klar til at kopiere.", "ok");
+  else setStatus("Alt er udfyldt. Husk at gennemlæse tilbuddet inden afsendelse. Tilbuddet er klar til at kopiere.", "ok");
 }
 function flash(text, kind) {
   setStatus(text, kind);
