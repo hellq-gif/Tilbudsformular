@@ -208,7 +208,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           </fieldset>
         </div>
         <div class="field"><label for="periode">Aftaleperiode <small>(antal måneder)</small></label><input type="text" id="periode" inputmode="numeric" value="60" autocomplete="off"></div>
-        <label class="check"><input type="checkbox" id="ingenper"> Nævn ikke aftaleperiode</label>
+        <label class="check"><input type="checkbox" id="ingenper" checked> Nævn ikke aftaleperiode</label>
       </fieldset>
 
       <fieldset>
@@ -603,7 +603,7 @@ $("reset").addEventListener("click", () => {
   $("maelkepulver").checked = false;
   $("mahlkonig").checked = false;
   $("puqpress").checked = false;
-  $("ingenper").checked = false;
+  $("ingenper").checked = true;
   $("udloeb").value = "";
   ["kgpris", "kgmaaned", "levmin"].forEach((id) => { $(id).value = ""; });
   FORMATER.forEach((f) => { $(f.id).checked = f.id === "fmt-1kg"; });
