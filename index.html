@@ -583,29 +583,8 @@ function flash(text, kind) {
 // New Outlook kan omskrive <strong> til <b> og fjerne skriftstørrelsen.
 // Brug derfor et HTML font-size-attribut som fallback i KUN den kopierede mail.
 // Behold de oprindelige tabeller, baggrunde og hele generatorens forhåndsvisning.
-// Outlook kan udjævne font-size på <strong>/<span> under indsætning.
-// Rigtige HTML-overskrifter bevarer et synligt hierarki, også når styling
-// normaliseres af mailprogrammet. Kun kopieret HTML ændres, ikke preview/PDF.
-function outlookOverskrifter(html) {
-  const specs = {
-    34: { tag: "h1", pt: 26, line: 34, color: "#6F4529" }, // Tilbud til...
-    26: { tag: "h2", pt: 22, line: 29, color: "#2B1D14" }, // Sektionsoverskrifter
-    20: { tag: "h3", pt: 17, line: 23, color: "#2B1D14" }, // Kaffenavne
-    16: { tag: "h3", pt: 15, line: 21, color: "#6F4529" }, // Ekstraudstyr
-    15: { tag: "h3", pt: 14, line: 19, color: "#6F4529" }  // Pris
-  };
-  return html.replace(
-    /<strong style="font-family:[^"]*?font-size:(\d+)px;line-height:\d+px;font-weight:700;">([^<]*)<\/strong>/g,
-    (original, px, label) => {
-      const spec = specs[Number(px)];
-      if (!spec) return original;
-      const style = `margin:0;padding:0;display:block;font-family:${FONT};font-size:${spec.pt}pt;line-height:${spec.line}pt;mso-line-height-rule:exactly;font-weight:700;color:${spec.color};`;
-      return `<${spec.tag} style="${style}"><b style="font-family:${FONT};font-size:${spec.pt}pt;font-weight:700;color:${spec.color};">${label}</b></${spec.tag}>`;
-    }
-  );
-}
 async function copyRich() {
-  const html = outlookOverskrifter(buildEmail(read()));
+  const html = buildEmail(read());
   const text = $("preview").innerText;
   try {
     if (navigator.clipboard && window.ClipboardItem) {
@@ -616,21 +595,15 @@ async function copyRich() {
       return true;
     }
   } catch (e) { /* prøv næste metode */ }
-  // Fallback-kopiering bruger samme Outlook-HTML (uden at ændre tabellayoutet).
-  const copyArea = document.createElement("div");
-  copyArea.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;";
-  copyArea.innerHTML = html;
-  document.body.appendChild(copyArea);
   try {
     const r = document.createRange();
-    r.selectNodeContents(copyArea);
+    r.selectNodeContents($("preview"));
     const sel = window.getSelection();
     sel.removeAllRanges(); sel.addRange(r);
     const ok = document.execCommand("copy");
     sel.removeAllRanges();
     return ok;
   } catch (e) { return false; }
-  finally { copyArea.remove(); }
 }
 
 // Originalt Blackbird-logo: sort tekst + hvid billedbaggrund.
