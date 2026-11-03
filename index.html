@@ -325,6 +325,7 @@ function missing(s) {
   if (!s.vand) m.push("vandforsyning");
   if (s.maskine === "falcon" && s.vand && !["tank8", "fast"].includes(s.vand)) m.push("vandforsyning (Falcon: kun 8L tank eller fastvand)");
   if (!s.maelk) m.push("mælk");
+  if (s.maskine && s.maskine.startsWith("simonelli") && s.maelk === "friskmaelk") m.push("Friskmælkskøleskab kan ikke vælges til Simonelli");
   if (!s.kaffe.length) m.push("kaffetype");
   if (s.pris === null || s.pris <= 0) m.push("koppris");
   if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
@@ -393,14 +394,14 @@ function buildEmail(s) {
     if (s.maelkepulver) equip.push("XL Mælkepulvertårn");
   }
   const semi = Boolean(s.maskine && s.maskine.startsWith("simonelli"));
-  if (s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab 4L");
+  if (!semi && s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab 4L");
   if (semi && s.mahlkonig) equip.push("Mahlkönig espressokværn");
   if (semi && s.puqpress) equip.push("Puqpress automatisk tamper");
   equip.push(vandTxt);
   const incl = ["maskinleje"];
   if (semi && s.mahlkonig) incl.push("Mahlkönig espressokværn");
   if (semi && s.puqpress) incl.push("Puqpress automatisk tamper");
-  if (s.maelk === "friskmaelk") incl.push("køleskab");
+  if (!semi && s.maelk === "friskmaelk") incl.push("køleskab");
   if (s.maelkepulver) incl.push("mælkepulver");
   incl.push("kaffe");
   if (s.kakao) incl.push("kakaopulver");
@@ -537,8 +538,28 @@ function opdaterVandvalg(maskine) {
   }
   aktivVandGruppe = gruppe;
 }
+// Et friskmælkskøleskab kan ikke kombineres med nogen Simonelli-model.
+// Ved skift væk fra Simonelli gendannes sælgerens tidligere valg.
+let tidligereMaelkValg = $("maelk").value;
+let simonelliMaelkAktivt = false;
+function opdaterMaelkvalg(maskine) {
+  const semi = maskine === "simonelli1" || maskine === "simonelli2";
+  const menu = $("maelk");
+  if (semi) {
+    if (!simonelliMaelkAktivt) tidligereMaelkValg = menu.value;
+    menu.value = "ingen";
+    menu.disabled = true;
+    menu.title = "Friskmælkskøleskab kan ikke vælges til Simonelli.";
+  } else {
+    if (simonelliMaelkAktivt) menu.value = tidligereMaelkValg;
+    menu.disabled = false;
+    menu.removeAttribute("title");
+  }
+  simonelliMaelkAktivt = semi;
+}
 function update() {
   opdaterVandvalg($("maskine").value);
+  opdaterMaelkvalg($("maskine").value);
   const s = read();
   $("mail").classList.toggle("mail-missing", !s.mail);
   const a = s.type === "aftale";
@@ -637,6 +658,7 @@ $("reset").addEventListener("click", () => {
   $("vis-maanedspris").checked = false;
   ["maskine", "vand"].forEach((id) => { $(id).value = ""; });
   $("maelk").value = "friskmaelk";
+  tidligereMaelkValg = "friskmaelk";
   tidligereVandvalg = "";
   $("kakao").checked = false;
   $("maelkepulver").checked = false;
