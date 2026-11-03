@@ -165,9 +165,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <p class="status" id="status" role="status" aria-live="polite"></p>
         <div class="buttons">
           <button type="button" class="primary" id="copy">Kopiér tilbud</button>
-          <button type="button" class="secondary" id="copyhtml">Kopiér HTML-kode</button>
         </div>
-        <p class="hint">Sæt tilbuddet ind i en ny mail med Cmd+V. Hvis billederne ikke følger med, så brug HTML-koden i et mailværktøj.</p>
+        <p class="hint">Sæt tilbuddet ind i en ny mail med Cmd+V.</p>
       </div>
       <div class="previewwrap"><div id="preview"></div></div>
     </div>
@@ -395,7 +394,6 @@ function update() {
   const miss = missing(s);
   const ready = miss.length === 0;
   $("copy").disabled = !ready;
-  $("copyhtml").disabled = !ready;
   if (!ready) setStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
   else setStatus("Alt er udfyldt. Tilbuddet er klar til at kopiere.", "ok");
 }
@@ -403,9 +401,6 @@ function flash(text, kind) {
   setStatus(text, kind);
   clearTimeout(statusTimer);
   statusTimer = setTimeout(update, 3500);
-}
-function fullHtml() {
-  return '<!DOCTYPE html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tilbud</title></head><body style="margin:0;padding:0;background-color:#EFEAE3;">' + buildEmail(read()) + "</body></html>";
 }
 async function copyRich() {
   const html = buildEmail(read());
@@ -429,19 +424,12 @@ async function copyRich() {
     return ok;
   } catch (e) { return false; }
 }
-async function copyCode() {
-  try { await navigator.clipboard.writeText(fullHtml()); return true; } catch (e) { return false; }
-}
 
 $("form").addEventListener("input", update);
 $("form").addEventListener("change", update);
 $("copy").addEventListener("click", async () => {
   if (await copyRich()) flash("Tilbuddet er kopieret. Sæt det ind i en ny mail.", "ok");
   else flash("Kopiering blev afvist her. Markér tilbuddet i udkastet og tryk Cmd+C.", "err");
-});
-$("copyhtml").addEventListener("click", async () => {
-  if (await copyCode()) flash("HTML-koden er kopieret.", "ok");
-  else flash("Kopiering blev afvist her. Prøv i stedet Kopiér tilbud.", "err");
 });
 $("reset").addEventListener("click", () => {
   ["firma", "navn", "pris", "drikkere", "periode"].forEach((id) => { $(id).value = ""; });
