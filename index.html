@@ -110,6 +110,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 #semi-accessories { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px; gap:9px; }
 /* Fastvand er et låst, men fortsat læsbart valg på Simonelli-modeller. */
 #vand:disabled { background:#332e29; color:#c9bdb3; -webkit-text-fill-color:#c9bdb3; border-color:#53483e; opacity:.7; cursor:not-allowed; }
+/* Let adskillelse mellem kaffebønner og øvrige forbrugsvarer */
+.product-group-label { font-size:12px; font-weight:650; color:var(--muted); margin:4px 0 8px; }
+.product-group-label small { font-weight:400; }
+.product-group-separator { border-top:1px solid var(--line); padding-top:14px; margin-top:14px; }
 </style>
 
 <div class="page">
@@ -157,16 +161,19 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
         <div class="field"><label for="vand">Vandforsyning</label>
           <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank</option><option value="tank8">8L vandtank</option><option value="fast">Fastvandstilslutning</option></select></div>
-        <div class="field"><label for="maelk">Mælk</label>
-          <select id="maelk"><option value="">Vælg</option><option value="friskmaelk" selected>Friskmælkskøleskab</option><option value="pulver">Mælkepulver</option><option value="ingen">Ingen mælk</option></select></div>
-        <label class="check"><input type="checkbox" id="kakao"> Kakaopulver inkluderet</label>
+        <div class="field"><label for="maelk">Mælkeudstyr</label>
+          <select id="maelk"><option value="friskmaelk" selected>Friskmælkskøleskab</option><option value="ingen">Intet friskmælkskøleskab</option></select></div>
       </fieldset>
 
       <fieldset>
-        <legend>Kaffe <small style="text-transform:none;letter-spacing:0;font-weight:400">(vælg en eller flere)</small></legend>
+        <legend>Kaffe og forbrugsvarer</legend>
+        <div class="product-group-label">Kaffebønner <small>(vælg en eller flere)</small></div>
         <label class="check"><input type="checkbox" id="kaffe-eb" checked> Early Bird</label>
         <label class="check"><input type="checkbox" id="kaffe-dr" checked> Early Bird Dark Roast</label>
         <label class="check"><input type="checkbox" id="kaffe-bw"> Black Wings</label>
+        <div class="product-group-label product-group-separator">Øvrige forbrugsvarer <small>(valgfrit)</small></div>
+        <label class="check"><input type="checkbox" id="maelkepulver"> Mælkepulver</label>
+        <label class="check"><input type="checkbox" id="kakao"> Kakaopulver</label>
       </fieldset>
 
       <fieldset>
@@ -265,6 +272,7 @@ const KAFFE = [
   { id: "kaffe-bw", name: "Black Wings", img: "bw", scores: [5, 5, 2],
     desc: "Flyv højt med Black Wings, vores kraftfulde mørkristede 100% Arabica-kaffe fra Syd- og Mellemamerika. Denne dybt aromatiske kaffe har en fyldig, rig krop og intense noter af mørk chokolade. Ideel til at nyde alene eller som base i mælkedrikke som Caffe Latte, hvor dens dybde virkelig skinner igennem." }
 ];
+const maelkepulverRow = () => `<tr><td style="padding:16px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:14px 0 0 0;"><div style="font-family:${SERIF};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Mælkepulver</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">Leveres sammen med kaffen som en del af den valgte kaffeløsning.</div></td></tr></table></td></tr>`;
 const kakaoRow = () => `<tr><td style="padding:20px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #E6DED3;padding:16px 0 0 0;"><div style="font-family:${SERIF};font-size:18px;line-height:24px;color:#2B1D14;padding-bottom:6px;">Kakaopulver 14 %</div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">Afrundet kakaodrik med god fylde og fin sødme.</div><div style="font-family:${FONT};font-size:12px;line-height:18px;color:#6B5A4A;padding-top:8px;">Lys og sød</div></td></tr></table></td></tr>`;
 const beanRow = (name) => {
   const k = KAFFE.find((x) => x.name === name);
@@ -286,7 +294,7 @@ function read() {
     kaffe: KAFFE.filter((k) => $(k.id).checked).map((k) => k.name),
     firma: $("firma").value.trim(), navn: $("navn").value.trim(), maskine: $("maskine").value,
     mahlkonig: $("mahlkonig").checked, puqpress: $("puqpress").checked,
-    vand: $("vand").value, maelk: $("maelk").value, kakao: $("kakao").checked,
+    vand: $("vand").value, maelk: $("maelk").value, maelkepulver: $("maelkepulver").checked, kakao: $("kakao").checked,
     pris: num($("pris").value), drikkere: num($("drikkere").value), model: $("model").value,
     estimeret: num($("drikkere").value) === null ? null : Math.round(num($("drikkere").value) * 60),
     visMaanedspris: $("vis-maanedspris").checked,
@@ -376,14 +384,12 @@ function buildEmail(s) {
   if (s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab");
   if (semi && s.mahlkonig) equip.push("Mahlkönig espressokværn");
   if (semi && s.puqpress) equip.push("Puqpress automatisk tamper");
-  if (s.maelk === "pulver") equip.push("Mælkepulver");
   equip.push(vandTxt);
-  if (s.kakao) equip.push("Kakaopulver");
   const incl = ["maskinleje"];
   if (semi && s.mahlkonig) incl.push("Mahlkönig espressokværn");
   if (semi && s.puqpress) incl.push("Puqpress automatisk tamper");
   if (s.maelk === "friskmaelk") incl.push("køleskab");
-  if (s.maelk === "pulver") incl.push("mælkepulver");
+  if (s.maelkepulver) incl.push("mælkepulver");
   incl.push("kaffe");
   if (s.kakao) incl.push("kakaopulver");
   if (s.vand === "fast") incl.push("fastvandstilslutning");
@@ -427,6 +433,8 @@ ${para(esc(equip.join(" · ")), "4px 40px 0 40px")}
 ${h2("Kaffen")}
 ${para((s.kaffe.includes("Early Bird") ? "Vores favoritbønne er Early Bird, 100 % Arabica. " : "") + "Jeres kaffe: " + (s.kaffe.length ? joinOg(s.kaffe) : "[vælg kaffetype]") + ". I kan frit skifte mellem alle vores kaffevarianter fra levering til levering. Kaffen friskristes i Roskilde tæt på levering.")}
 ${s.kaffe.map(beanRow).join("")}
+${s.maelkepulver || s.kakao ? h2("Øvrige forbrugsvarer", 28) : ""}
+${s.maelkepulver ? maelkepulverRow() : ""}
 ${s.kakao ? kakaoRow() : ""}
 ${h2("Service og drift", 32)}
 <tr><td style="padding:0 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${["Installation", "Løbende levering af kaffe", "Fuld serviceaftale", "Alle reservedele inkluderet", "Ombytning af maskinen ved behov"].map(checkBullet).join("")}</table></td></tr>
@@ -468,7 +476,7 @@ function findWarnings(s) {
   if (s.model === "min" && s.estimeret !== null && s.kopper !== null && s.kopper > s.estimeret) w.push("Minimumsforbruget er højere end det estimerede forbrug.");
   if (s.maskine.startsWith("simonelli")) {
     if (s.vand !== "fast") w.push("Simonelli Appia Life kræver normalt fast vandtilslutning. Kontrollér vandforsyningen.");
-    if (s.maelk === "pulver") w.push("Semiautomatiske Simonelli-maskiner damper frisk mælk manuelt. Mælkepulver er ikke en integreret funktion.");
+    if (s.maelkepulver) w.push("Mælkepulver er en forbrugsvare og ikke en integreret funktion i en Simonelli.");
     if (s.kakao) w.push("Kakao er ikke en integreret automatisk funktion på Simonelli. Kontrollér opsætningen.");
     if (!s.mahlkonig) w.push("Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.");
   }
@@ -592,6 +600,7 @@ $("reset").addEventListener("click", () => {
   ["maskine", "vand", "maelk"].forEach((id) => { $(id).value = ""; });
   tidligereVandvalg = "";
   $("kakao").checked = false;
+  $("maelkepulver").checked = false;
   $("mahlkonig").checked = false;
   $("puqpress").checked = false;
   $("ingenper").checked = false;
