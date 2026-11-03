@@ -431,7 +431,8 @@ function buildEmail(s) {
     ? `${h2("Baristaoplevelse med semiautomatisk maskine")}
 ${para("Espresso og mælkeskum tilberedes manuelt med portafilter og steamarm. Løsningen er til jer, der ønsker en autentisk baristaoplevelse, og hvor personalet betjener maskinen.")}`
     : `${h2("Intelligent fjernstyring")}
-${para("Maskinen registrerer løbende forbrug og lagerstatus, så kaffeleverancerne automatisk bliver tilpasset jeres behov. Vores serviceafdeling kan desuden fjernstyre maskinen, så justeringer af styrke eller temperatur klares over telefonen inden for få minutter, uden behov for et teknikerbesøg.")}`;
+${para("Maskinen registrerer løbende forbrug og lagerstatus, så kaffeleverancerne automatisk bliver tilpasset efter behov. På den måde undgår I både at løbe tør og at have unødigt meget kaffe på lager.")}
+${para("Maskinen kan desuden fjernstyres af vores serviceafdeling. Hvis I eksempelvis får nye kopper, ønsker en stærkere Americano eller vil have temperaturen justeret, så kan vi klare det over telefonen inden for få minutter – uden behov for et teknikerbesøg.")}`;
   const mainMaskine = `${machineRow}
 ${h2("1 × " + esc(m ? m.name : "[Model]"), 32)}
 ${para(esc(m ? m.desc : "[Vælg model]"))}
