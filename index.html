@@ -136,8 +136,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <fieldset>
             <legend>Leveres som <small style="text-transform:none;letter-spacing:0;font-weight:400">(vælg en eller flere)</small></legend>
             <label class="check"><input type="checkbox" id="fmt-1kg" checked> Hele bønner i 1 kg poser</label>
-            <label class="check"><input type="checkbox" id="fmt-500"> Formalet i 500 g poser</label>
-            <label class="check"><input type="checkbox" id="fmt-75"> Formalet i 75 g poser</label>
+            <label class="check"><input type="checkbox" id="fmt-500"> Formalet i 500 g poser <small>(kun Early Bird)</small></label>
+            <label class="check"><input type="checkbox" id="fmt-75"> Formalet i 75 g poser <small>(kun Early Bird)</small></label>
           </fieldset>
           <fieldset>
             <legend>Tilbehør <small style="text-transform:none;letter-spacing:0;font-weight:400">(valgfrit)</small></legend>
@@ -239,6 +239,7 @@ function missing(s) {
     if (s.kgpris === null || s.kgpris <= 0) m.push("pris pr. kg");
     if (s.kgmaaned === null || s.kgmaaned <= 0) m.push("forventet kg pr. måned");
     if (!s.formater.length) m.push("leveringsformat");
+    if (s.formater.some((id) => id !== "fmt-1kg") && !s.kaffe.includes("Early Bird")) m.push("Early Bird (formalet fås kun som Early Bird)");
     if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode (eller afkryds, at den ikke skal nævnes)");
     if (!s.mail) m.push("svar-adresse");
     return m;
@@ -274,8 +275,9 @@ function mainAftale(s) {
   const lines = txt.map((t, i) => priceLine(t, i === txt.length - 1)).join("\n");
 
   const kaffeTxt = (s.kaffe.includes("Early Bird") ? "Vores favoritbønne er Early Bird, 100 % Arabica. " : "") + "Jeres kaffe: " + (s.kaffe.length ? joinOg(s.kaffe) : "[vælg kaffetype]") + ". I kan frit skifte mellem alle vores kaffevarianter fra levering til levering.";
-  const mørkNote = s.kaffe.includes("Early Bird Dark Roast") && s.formater.some((id) => id !== "fmt-1kg")
-    ? para("Early Bird Dark Roast leveres kun som hele bønner i 1 kg poser.", "4px 40px 0 40px") : "";
+  const andre = s.kaffe.filter((k) => k !== "Early Bird");
+  const mørkNote = andre.length && s.formater.some((id) => id !== "fmt-1kg")
+    ? para(`Formalet kaffe fås kun som Early Bird. ${joinOg(andre)} leveres kun som hele bønner i 1 kg poser.`, "4px 40px 0 40px") : "";
   const bullets = formater.map((f) => bullet(esc(f.label))).join("");
 
   return `${h2("Kaffeaftale", 32)}
