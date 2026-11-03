@@ -402,16 +402,22 @@ function buildEmail(s) {
   const aktivtAntal = s.model === "fast" ? s.estimeret : s.kopper;
   const betaling = s.pris && aktivtAntal ? fmtKr(s.pris * aktivtAntal) : "[beløb]";
   const tillæg = s.visMaanedspris ? `, svarende til ${s.model === "fast" ? "en månedlig betaling" : "en minimumsbetaling"} på ${betaling} kr. pr. måned` : "";
-  const modelLine = s.model === "fast"
-    ? `Fast betaling baseret på et estimeret forbrug på ${estimeret} kopper pr. måned${tillæg}.`
-    : `Med vores koncept betaler I for jeres faktiske forbrug, dog med et minimum på ${kopper} kopper pr. måned${tillæg}.`;
+  const modelLine = `Fast betaling baseret på et estimeret forbrug på ${estimeret} kopper pr. måned${tillæg}.`;
   const mdr = s.periode !== null && s.periode > 0 ? Math.round(s.periode) : null;
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
 
   const lines = [priceLine(`Prisen inkluderer ${joinOg(incl)}.`)];
   if (s.drikkere) lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} kaffedrikkere.`));
-  if (periodeLine) lines.push(priceLine(modelLine), priceLine(periodeLine, true));
-  else lines.push(priceLine(modelLine, true));
+  if (s.model === "fast") {
+    // Ved fast betaling må vi ikke love årsafregning efter faktisk forbrug.
+    lines.push(priceLine(modelLine, !periodeLine));
+  } else {
+    const minimumPris = s.visMaanedspris ? ` (${betaling} kr. pr. måned)` : "";
+    lines.push(priceLine(`Med vores nye koncept betaler I for jeres faktiske forbrug - dog med en minimumsbetaling svarende til ${kopper} kopper om måneden${minimumPris}.`));
+    lines.push(priceLine("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte."));
+    lines.push(priceLine(`Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ${kopper} kopper pr. md. i forbindelse med årsopgørelsen. Ligesom en varmeregning 🙂`, !periodeLine));
+  }
+  if (periodeLine) lines.push(priceLine(periodeLine, true));
 
   const machineRow = m ? `<tr><td style="padding:24px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:100%;max-width:520px;background-color:#FFFFFF;"><tr><td><img src="${IMG[s.maskine]}" width="520" alt="${esc(m.name)}" style="display:block;width:100%;max-width:520px;height:auto;border:0;background-color:#FFFFFF;"></td></tr></table></td></tr>` : "";
   let udloebTxt = "";
