@@ -384,6 +384,10 @@ function buildEmail(s) {
   const navn = s.navn || "[Kontaktperson]";
   const vandTxt = s.vand === "tank" ? "Vandtank 2L" : s.vand === "tank8" ? "Vandtank 8L" : s.vand === "fast" ? "Fastvandstilslutning med BWT Filter" : "[Vandforsyning]";
   const equip = [];
+  if (s.maskine === "falcon") {
+    equip.push("XL Bønnetårne (2 stk.)", "XL Kakaotårn");
+    if (s.maelkepulver) equip.push("XL Mælkepulvertårn");
+  }
   const semi = Boolean(s.maskine && s.maskine.startsWith("simonelli"));
   if (s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab 4L");
   if (semi && s.mahlkonig) equip.push("Mahlkönig espressokværn");
