@@ -589,7 +589,7 @@ function outlookKlarHtml(html) {
     div.style.cssText = node.style.cssText;
     const width = node.getAttribute("width");
     const bg = node.getAttribute("bgcolor");
-    if (width && !div.style.width) div.style.width = /^\\d+$/.test(width) ? width + "px" : width;
+    if (width && !div.style.width) div.style.width = /^\d+$/.test(width) ? width + "px" : width;
     if (bg && !div.style.backgroundColor) div.style.backgroundColor = bg;
 
     if (tag === "table" && width && width !== "100%") {
