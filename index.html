@@ -163,8 +163,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
         <div class="field"><label for="vand">Vandforsyning</label>
           <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank</option><option value="tank8">8L vandtank</option><option value="fast">Fastvandstilslutning</option></select></div>
-        <div class="field"><label for="maelk">Mælkeudstyr</label>
-          <select id="maelk"><option value="friskmaelk" selected>Friskmælkskøleskab</option><option value="ingen">Intet friskmælkskøleskab</option></select></div>
+        <div class="field"><label for="maelk">Friskmælkskøleskab 4L</label>
+          <select id="maelk"><option value="friskmaelk" selected>Ja</option><option value="ingen">Nej</option></select></div>
       </fieldset>
 
       <fieldset>
@@ -599,7 +599,8 @@ $("reset").addEventListener("click", () => {
   $("drikkere").value = "10";
   $("periode").value = "60";
   $("vis-maanedspris").checked = false;
-  ["maskine", "vand", "maelk"].forEach((id) => { $(id).value = ""; });
+  ["maskine", "vand"].forEach((id) => { $(id).value = ""; });
+  $("maelk").value = "friskmaelk";
   tidligereVandvalg = "";
   $("kakao").checked = false;
   $("maelkepulver").checked = false;
