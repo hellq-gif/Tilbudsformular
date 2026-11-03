@@ -417,12 +417,12 @@ function setStatus(text, kind) {
 }
 function findWarnings(s) {
   const w = [];
+  if (!s.ingenper && (s.periode === null || s.periode <= 0)) w.push("Aftaleperioden mangler.");
+  if (s.ingenper) w.push("Aftaleperioden skjules i tilbuddet. Kontrollér, at den er aftalt med kunden.");
   if (s.type !== "maskine") return w;
   if (s.estimeret !== null && s.estimeret > 0 && s.estimeret < 100) w.push("Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.");
   if (s.model === "min" && s.kopper !== null && s.kopper > 0 && s.kopper < 100) w.push("Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.");
   if (s.model === "min" && s.estimeret !== null && s.kopper !== null && s.kopper > s.estimeret) w.push("Minimumsforbruget er højere end det estimerede forbrug.");
-  if (!s.ingenper && (s.periode === null || s.periode <= 0)) w.push("Aftaleperioden mangler.");
-  if (s.ingenper) w.push("Aftaleperioden skjules i tilbuddet. Kontrollér, at den er aftalt med kunden.");
   if (s.maskine === "jura" && s.kakao) w.push("Kontrollér kompatibiliteten mellem Jura X10 og den valgte kakaoløsning.");
   if (s.maskine === "jura" && s.vand === "tank8") w.push("Kontrollér, at 8 L-vandtanken er kompatibel med Jura X10.");
   return w;
