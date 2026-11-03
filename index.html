@@ -110,6 +110,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 #semi-accessories { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px; gap:9px; }
 /* Fastvand er et låst, men fortsat læsbart valg på Simonelli-modeller. */
 #vand:disabled { background:#332e29; color:#c9bdb3; -webkit-text-fill-color:#c9bdb3; border-color:#53483e; opacity:.7; cursor:not-allowed; }
+#mail.mail-missing { border-color:#E7BD75; box-shadow:0 0 0 1px rgba(231,189,117,.22); }
 /* Let adskillelse mellem kaffebønner og øvrige forbrugsvarer */
 .product-group-label { font-size:12px; font-weight:650; color:var(--muted); margin:4px 0 8px; }
 .product-group-label small { font-weight:400; }
@@ -215,7 +216,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <fieldset>
         <legend>Mailen</legend>
         <div class="field"><label for="udloeb">Udløbsdato <small>(valgfri, vises nederst i tilbuddet)</small></label><input type="date" id="udloeb"></div>
-        <div class="field"><label for="mail">Svar-adresse <small>(knappen i mailen)</small></label><input type="email" id="mail" value="lb@blackbirdcoffee.dk" autocomplete="off"></div>
+        <div class="field"><label for="mail">Sælgers mailadresse <small>(svar-knappen i tilbuddet)</small></label><select id="mail" required aria-required="true"><option value="" selected>Ikke valgt</option><option value="nh@blackbirdcoffee.dk">nh@blackbirdcoffee.dk</option><option value="mfh@blackbirdcoffee.dk">mfh@blackbirdcoffee.dk</option><option value="lb@blackbirdcoffee.dk">lb@blackbirdcoffee.dk</option><option value="maj@blackbirdcoffee.dk">maj@blackbirdcoffee.dk</option><option value="hk@blackbirdcoffee.dk">hk@blackbirdcoffee.dk</option><option value="jh@blackbirdcoffee.dk">jh@blackbirdcoffee.dk</option><option value="nn@blackbirdcoffee.dk">nn@blackbirdcoffee.dk</option><option value="ob@blackbirdcoffee.dk">ob@blackbirdcoffee.dk</option><option value="ns@blackbirdcoffee.dk">ns@blackbirdcoffee.dk</option></select></div>
       </fieldset>
     </form>
 
@@ -313,7 +314,7 @@ function missing(s) {
     if (!s.formater.length) m.push("leveringsformat");
     if (s.formater.some((id) => id !== "fmt-1kg") && !s.kaffe.includes("Early Bird")) m.push("Early Bird (formalet fås kun som Early Bird)");
     if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode (eller afkryds, at den ikke skal nævnes)");
-    if (!s.mail) m.push("svar-adresse");
+    if (!s.mail) m.push("sælgers mailadresse");
     return m;
   }
   if (!s.maskine) m.push("model");
@@ -324,7 +325,7 @@ function missing(s) {
   if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
   if (s.model === "min" && (s.kopper === null || s.kopper <= 0)) m.push("minimumskopper pr. måned");
   if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode (eller afkryds, at den ikke skal nævnes)");
-  if (!s.mail) m.push("svar-adresse");
+  if (!s.mail) m.push("sælgers mailadresse");
   return m;
 }
 
@@ -468,6 +469,7 @@ function setStatus(text, kind) {
 }
 function findWarnings(s) {
   const w = [];
+  if (!s.mail) w.push("Vælg sælgers mailadresse, inden tilbuddet sendes.");
   if (!s.ingenper && (s.periode === null || s.periode <= 0)) w.push("Aftaleperioden mangler.");
   if (s.type !== "maskine") return w;
   if (s.estimeret !== null && s.estimeret > 0 && s.estimeret < 100) w.push("Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.");
@@ -512,6 +514,7 @@ function opdaterVandvalg(maskine) {
 function update() {
   opdaterVandvalg($("maskine").value);
   const s = read();
+  $("mail").classList.toggle("mail-missing", !s.mail);
   const a = s.type === "aftale";
   $("sek-maskine").hidden = a;
   $("maskine-pris").hidden = a;
@@ -604,6 +607,7 @@ $("reset").addEventListener("click", () => {
   $("puqpress").checked = false;
   $("ingenper").checked = true;
   $("udloeb").value = "";
+  $("mail").value = "";
   ["kgpris", "kgmaaned", "levmin"].forEach((id) => { $(id).value = ""; });
   FORMATER.forEach((f) => { $(f.id).checked = f.id === "fmt-1kg"; });
   $("type-maskine").checked = true;
