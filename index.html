@@ -162,7 +162,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <label class="check"><input type="checkbox" id="puqpress"> Puqpress automatisk tamper</label>
         </div>
         <div class="field"><label for="vand">Vandforsyning</label>
-          <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank</option><option value="tank8">8L vandtank</option><option value="fast">Fastvandstilslutning</option></select></div>
+          <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank 2L</option><option value="tank8">Vandtank 8L</option><option value="fast">Fastvandstilslutning med BWT Filter</option></select></div>
         <div class="field"><label for="maelk">Friskmælkskøleskab 4L</label>
           <select id="maelk"><option value="friskmaelk" selected>Ja</option><option value="ingen">Nej</option></select></div>
       </fieldset>
@@ -380,7 +380,7 @@ function buildEmail(s) {
   const m = MACH[s.maskine];
   const firma = s.firma || "[Virksomhed]";
   const navn = s.navn || "[Kontaktperson]";
-  const vandTxt = s.vand === "tank" ? "Vandtank" : s.vand === "tank8" ? "8 liters vandtank" : s.vand === "fast" ? "Fastvandstilslutning" : "[Vandforsyning]";
+  const vandTxt = s.vand === "tank" ? "Vandtank 2L" : s.vand === "tank8" ? "Vandtank 8L" : s.vand === "fast" ? "Fastvandstilslutning med BWT Filter" : "[Vandforsyning]";
   const equip = [];
   const semi = Boolean(s.maskine && s.maskine.startsWith("simonelli"));
   if (s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab 4L");
@@ -506,7 +506,7 @@ function opdaterVandvalg(maskine) {
     tidligereVandvalg = menu.value;
     const fastvand = document.createElement("option");
     fastvand.value = "fast";
-    fastvand.textContent = "Kun fastvandstilslutning";
+    fastvand.textContent = "Fastvandstilslutning med BWT Filter";
     menu.replaceChildren(fastvand);
     menu.value = "fast";
     menu.disabled = true;
