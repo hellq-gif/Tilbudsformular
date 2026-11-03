@@ -469,7 +469,6 @@ function setStatus(text, kind) {
 function findWarnings(s) {
   const w = [];
   if (!s.ingenper && (s.periode === null || s.periode <= 0)) w.push("Aftaleperioden mangler.");
-  if (s.ingenper) w.push("Aftaleperioden skjules i tilbuddet. Kontrollér, at den er aftalt med kunden.");
   if (s.type !== "maskine") return w;
   if (s.estimeret !== null && s.estimeret > 0 && s.estimeret < 100) w.push("Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.");
   if (s.model === "min" && s.kopper !== null && s.kopper > 0 && s.kopper < 100) w.push("Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.");
