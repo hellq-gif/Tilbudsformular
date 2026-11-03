@@ -474,7 +474,30 @@ function findWarnings(s) {
   if (s.maskine === "jura" && s.vand === "tank8") w.push("Kontrollér, at 8 L-vandtanken er kompatibel med Jura X10.");
   return w;
 }
+// Simonelli kræver fastvand: menuen viser kun dette valg på begge modeller.
+// Ved skift til en anden maskine får sælgeren alle muligheder tilbage.
+const almindeligeVandvalg = Array.from($("vand").options, o => o.cloneNode(true));
+let tidligereVandvalg = $("vand").value;
+let simonelliVandAktivt = false;
+function opdaterVandvalg(maskine) {
+  const erSimonelli = maskine === "simonelli1" || maskine === "simonelli2";
+  if (erSimonelli === simonelliVandAktivt) return;
+  const menu = $("vand");
+  if (erSimonelli) {
+    tidligereVandvalg = menu.value;
+    const fastvand = document.createElement("option");
+    fastvand.value = "fast";
+    fastvand.textContent = "Fastvandstilslutning";
+    menu.replaceChildren(fastvand);
+    menu.value = "fast";
+  } else {
+    menu.replaceChildren(...almindeligeVandvalg.map(o => o.cloneNode(true)));
+    menu.value = tidligereVandvalg;
+  }
+  simonelliVandAktivt = erSimonelli;
+}
 function update() {
+  opdaterVandvalg($("maskine").value);
   const s = read();
   const a = s.type === "aftale";
   $("sek-maskine").hidden = a;
@@ -561,6 +584,7 @@ $("reset").addEventListener("click", () => {
   $("periode").value = "60";
   $("vis-maanedspris").checked = false;
   ["maskine", "vand", "maelk"].forEach((id) => { $(id).value = ""; });
+  tidligereVandvalg = "";
   $("kakao").checked = false;
   $("mahlkonig").checked = false;
   $("puqpress").checked = false;
