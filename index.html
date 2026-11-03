@@ -445,7 +445,7 @@ ${para("Maskinen kan desuden fjernstyres af vores serviceafdeling. Hvis I eksemp
 ${h2("1 × " + esc(m ? m.name : "[Model]"), 32)}
 ${para(esc(m ? m.desc : "[Vælg model]"))}
 <tr><td style="padding:18px 40px 0 40px;font-family:${FONT};font-size:13px;line-height:18px;letter-spacing:1px;text-transform:uppercase;color:#6F4529;">Inkluderet ekstraudstyr</td></tr>
-${para(esc(equip.join(" · ")), "4px 40px 0 40px")}
+${para(esc(equip.join(" • ")), "4px 40px 0 40px")}
 ${h2("Kaffen")}
 ${para((s.kaffe.includes("Early Bird") ? "Vores favoritbønne er Early Bird, 100 % Arabica. " : "") + "Jeres kaffe: " + (s.kaffe.length ? joinOg(s.kaffe) : "[vælg kaffetype]") + ". I kan frit skifte mellem alle vores kaffevarianter fra levering til levering. Kaffen friskristes i Roskilde tæt på levering.")}
 ${s.kaffe.map(beanRow).join("")}
