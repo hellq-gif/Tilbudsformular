@@ -210,7 +210,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           </fieldset>
         </div>
         <div class="field"><label for="periode">Aftaleperiode <small>(antal måneder)</small></label><input type="text" id="periode" inputmode="numeric" value="60" autocomplete="off"></div>
-        <label class="check"><input type="checkbox" id="ingenper" checked> Nævn ikke aftaleperiode</label>
+        <label class="check"><input type="checkbox" id="visper"> Nævn aftaleperiode</label>
       </fieldset>
 
       <fieldset>
@@ -300,7 +300,7 @@ function read() {
     pris: num($("pris").value), drikkere: num($("drikkere").value), model: $("model").value,
     estimeret: num($("drikkere").value) === null ? null : Math.round(num($("drikkere").value) * 60),
     visMaanedspris: $("vis-maanedspris").checked,
-    kopper: num($("kopper").value), periode: num($("periode").value), ingenper: $("ingenper").checked,
+    kopper: num($("kopper").value), periode: num($("periode").value), ingenper: !$("visper").checked,
     intro: $("intro").value.trim(), mail: $("mail").value.trim(), udloeb: $("udloeb").value
   };
 }
@@ -314,7 +314,7 @@ function missing(s) {
     if (s.kgmaaned === null || s.kgmaaned <= 0) m.push("forventet kg pr. måned");
     if (!s.formater.length) m.push("leveringsformat");
     if (s.formater.some((id) => id !== "fmt-1kg") && !s.kaffe.includes("Early Bird")) m.push("Early Bird (formalet fås kun som Early Bird)");
-    if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode (eller afkryds, at den ikke skal nævnes)");
+    if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode");
     if (!s.mail) m.push("sælgers mailadresse");
     return m;
   }
@@ -325,7 +325,7 @@ function missing(s) {
   if (s.pris === null || s.pris <= 0) m.push("koppris");
   if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
   if (s.model === "min" && (s.kopper === null || s.kopper <= 0)) m.push("minimumskopper pr. måned");
-  if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode (eller afkryds, at den ikke skal nævnes)");
+  if (!s.ingenper && (s.periode === null || s.periode <= 0)) m.push("aftaleperiode");
   if (!s.mail) m.push("sælgers mailadresse");
   return m;
 }
@@ -619,7 +619,7 @@ $("reset").addEventListener("click", () => {
   $("maelkepulver").checked = false;
   $("mahlkonig").checked = false;
   $("puqpress").checked = false;
-  $("ingenper").checked = true;
+  $("visper").checked = false;
   $("udloeb").value = "";
   $("mail").value = "";
   ["kgpris", "kgmaaned", "levmin"].forEach((id) => { $(id).value = ""; });
