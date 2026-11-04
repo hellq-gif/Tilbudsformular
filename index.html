@@ -1099,7 +1099,15 @@ function applyEditorLanguage() {
     const stored = editorSourceAttrs.get(element);
     for (const attr of ["title","placeholder","aria-label"]) {
       if (!element.hasAttribute(attr)) continue;
-      if (!(attr in stored)) stored[attr] = element.getAttribute(attr);
+      // Dynamiske titler ændres, når sælgeren skifter maskintype.
+      // Opdatér kildeteksten, hvis appen har indsat en ny dansk værdi.
+      const current = element.getAttribute(attr);
+      if (!(attr in stored) ||
+          (current !== stored[attr] &&
+           current !== localizedEditorText(stored[attr], "sv") &&
+           current !== localizedEditorText(stored[attr], "en"))) {
+        stored[attr] = current;
+      }
       const translated = localizedEditorText(stored[attr], language);
       if (element.getAttribute(attr) !== translated) element.setAttribute(attr, translated);
     }
