@@ -463,7 +463,130 @@ ${lines}
 `;
 }
 
+
+// English rendering uses the same Outlook-compatible HTML as the Danish offer.
+const EN_MACHINE_DESC = {
+  swan: "Fully automatic espresso machine – ideal for smaller offices. The machine offers drinks including caffè latte, espresso, macchiato, black coffee, flat white, cappuccino and carafe brewing, and is built for professional use.",
+  falcon: "Premium fully automatic espresso machine – a luxury barista experience. The machine offers drinks including caffè latte, espresso, macchiato, black coffee, flat white, cappuccino, hot chocolate and carafe brewing.",
+  jura: "Fully automatic office coffee machine that prepares a wide range of coffee specialities. Intuitive controls and automatic cleaning programmes.",
+  simonelli1: "Professional semi-automatic espresso machine with one group head and volumetric dosing. Espresso and milk-based drinks are prepared manually using a portafilter and steam wand – a compact setup for an authentic barista experience.",
+  simonelli2: "Professional semi-automatic espresso machine with two group heads and volumetric dosing. Designed for busy coffee environments where a barista prepares espresso and milk-based drinks manually using a portafilter and steam wand."
+};
+const EN_BEAN_DESC = {
+  "Early Bird": "Start your day with Early Bird, our smooth and full-bodied medium-roast coffee with a fresh aroma and subtle spicy notes. Its rounded, balanced profile comes from 100% Arabica beans carefully blended from plantations in Colombia, Guatemala, Brazil, Kenya, Ethiopia and Sumatra.",
+  "Early Bird Dark Roast": "Start your day with our dark-roast coffee, offering a rich, intense flavour with notes of dark chocolate, roasted nuts and a hint of spice. This full-bodied blend uses 100% Arabica beans carefully selected from plantations in Colombia, Guatemala, Brazil, Kenya, Ethiopia and Sumatra.",
+  "Black Wings": "Take flight with Black Wings, our powerful dark-roast 100% Arabica coffee from South and Central America. It has a rich body and intense notes of dark chocolate. Enjoy it black or use it as a base for milk drinks such as caffè latte."
+};
+const EN_OFFER_STRINGS = [
+  ["Vi friskrister altid vores kaffe i Danmark, i Roskilde – tæt på leveringstidspunktet.", "We always freshly roast our coffee in Roskilde, Denmark, shortly before delivery."],
+  ["I kan frit skifte mellem alle vores kaffevarianter fra levering til levering.", "You can freely switch between all our coffee varieties from one delivery to the next."],
+  ["På de semiautomatiske maskiner tilberedes espresso og mælkeskum manuelt med portafilter og steamarm.", "On the semi-automatic machines, espresso and milk foam are prepared manually using a portafilter and steam wand."],
+  ["De fuldautomatiske maskiner kan efter behov tilpasses med hjælp fra vores serviceafdeling.", "Our service team can adjust the fully automatic machines as needed."],
+  ["Espresso og mælkeskum tilberedes manuelt med portafilter og steamarm. Løsningen er til jer, der ønsker en autentisk baristaoplevelse, og hvor personalet betjener maskinen.", "Espresso and milk foam are prepared manually using a portafilter and steam wand. This solution is ideal for teams seeking an authentic, hands-on barista experience."],
+  ["Maskinen registrerer løbende forbrug og lagerstatus, så kaffeleverancerne automatisk bliver tilpasset efter behov. På den måde undgår I både at løbe tør og at have unødigt meget kaffe på lager.", "The machine continuously monitors consumption and stock levels, allowing coffee deliveries to be adjusted to your needs. This helps you avoid running out of coffee or keeping unnecessary stock."],
+  ["Maskinen kan desuden fjernstyres af vores serviceafdeling.", "Our service team can also adjust the machine remotely."],
+  ["Hvis I eksempelvis får en ny størrelse kopper, ønsker en stærkere Americano eller vil have temperaturen justeret, kan vi klare det over telefonen inden for få minutter – uden behov for et teknikerbesøg.", "If you change cup sizes, prefer a stronger Americano or want the temperature adjusted, our service team can usually make the change remotely in just a few minutes – with no technician visit required."],
+  ["Alle priser er ekskl. moms. Der er typisk 1–2 ugers leveringstid fra godkendelse.", "All prices exclude VAT. Delivery typically takes 1–2 weeks from approval."],
+  ["Sig endelig til, hvis der er noget, I ønsker tilpasset.", "Please let us know if you would like us to adjust anything."],
+  ["Betalingsløsning med kort", "Card payment solution"],
+  ["Friskmælkskøleskab 4L", "4L fresh milk fridge"],
+  ["XL Mælkepulvertårn", "XL milk powder container"],
+  ["XL Bønnetårne (2 stk.)", "XL bean hoppers (2 pcs.)"],
+  ["XL Kakaotårn", "XL chocolate powder container"],
+  ["Mahlkönig espressokværn", "Mahlkönig espresso grinder"],
+  ["Puqpress automatisk tamper", "Puqpress automatic tamper"],
+  ["Fastvandstilslutning med BWT Filter", "Mains water connection with BWT filter"],
+  ["Vandtank 2L", "2L water tank"],
+  ["Vandtank 5L", "5L water tank"],
+  ["Vandtank 8L", "8L water tank"],
+  ["Kaffemaskiner", "Coffee machines"],
+  ["Inkluderet ekstraudstyr", "Included equipment"],
+  ["Øvrige forbrugsvarer", "Other consumables"],
+  ["Service og drift", "Service and maintenance"],
+  ["Intelligent fjernstyring", "Smart remote management"],
+  ["Baristaoplevelse med semiautomatisk maskine", "Authentic semi-automatic barista experience"],
+  ["Kaffeaftale", "Coffee supply agreement"],
+  ["Formalet i 500 g poser", "Ground coffee in 500 g bags"],
+  ["Formalet i 75 g poser", "Ground coffee in 75 g bags"],
+  ["Hele bønner i 1 kg poser", "Whole beans in 1 kg bags"],
+  ["Kaffen fås som:", "Available coffee formats:"],
+  ["Svar på tilbuddet", "Reply to this offer"],
+  ["Levering", "Delivery"],
+  ["Kaffen", "The coffee"],
+  ["Mælkepulver", "Milk powder"],
+  ["Kakaopulver", "Chocolate powder"],
+  ["Ristning", "Roast"],
+  ["Fylde", "Body"],
+  ["Syre", "Acidity"]
+];
+function englishOfferHtml(html, s) {
+  let result = html;
+  for (const [id, description] of Object.entries(EN_MACHINE_DESC)) {
+    result = result.replaceAll(esc(MACH[id].desc), esc(description));
+  }
+  for (const bean of KAFFE) result = result.replaceAll(esc(bean.desc), esc(EN_BEAN_DESC[bean.name]));
+  result = result
+    .replace(/Prisen inkluderer ([^<]+)\./g, (_match, terms) => {
+      const words = [
+        ["maskinleje","machine rental"], ["Mahlkönig espressokværn","Mahlkönig espresso grinder"],
+        ["Puqpress automatisk tamper","Puqpress automatic tamper"], ["køleskab","milk fridge"],
+        ["kortbetalingsløsning","card payment solution"], ["mælkepulver","milk powder"],
+        ["kaffe","coffee"], ["kakaopulver","chocolate powder"],
+        ["fastvandstilslutning","mains water connection"], ["installation","installation"],
+        ["fuld serviceaftale","full service agreement"], ["reservedele","spare parts"],
+        ["ombytning ved behov","machine replacement when required"]
+      ];
+      let translated = terms;
+      for (const [da, en] of words) translated = translated.replaceAll(da, en);
+      return "The price includes " + translated.replace(/ og /g, " and ") + ".";
+    })
+    .replace(/Estimeret forbrug: ([\d.,]+) kopper pr\. måned, baseret på ([\d.,]+) kaffedrikkere?\./g, (_m, cups, people) => "Estimated consumption: " + cups + " cups per month, based on " + people + " coffee drinkers.")
+    .replace(/Estimatet er lavet ud fra ([\d.,]+) kaffedrikkere? som drikker 3 kopper i snit pr\. arbejdsdag\./g, (_m, people) => "The estimate assumes " + people + " coffee drinkers consuming an average of 3 cups per working day.")
+    .replace(/Med vores nye koncept betaler I for jeres faktiske forbrug - dog med en minimumsbetaling svarende til ([\d.,]+) kopper om måneden(?: \(([\d.,]+) kr\. pr\. måned\))?\./g, (_m, cups, amount) => "With our consumption-based model, you pay for what you actually drink, subject to a minimum monthly charge equivalent to " + cups + " cups" + (amount ? " (" + amount + " DKK per month)" : "") + ".")
+    .replaceAll("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte.", "Billing is based on estimated consumption, calculated from the number of employees.")
+    .replace(/Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ([\d.,]+) kopper pr\. md\. i forbindelse med årsopgørelsen\. Ligesom en varmeregning 🙂/g, (_m,cups) => "If you consume less than estimated, we refund the difference down to the " + cups + "-cup monthly minimum during the annual reconciliation – just like a utility bill. 🙂")
+    .replaceAll("Faktureres ud fra estimeret forbrug.", "Invoiced based on estimated consumption.")
+    .replace(/Aftaleperiode: ([\d]+) (?:måned|måneder)\./g, (_m, months) => "Agreement term: " + months + " " + (Number(months) === 1 ? "month" : "months") + ".")
+    .replace(/Aftaleperiode: \[antal\] måneder\./g, "Agreement term: [number] months.")
+    .replace(/Prisen er beregnet ud fra en forventet aftagning på ([\d.,\[\]a-zA-Z]+) kg pr\. måned\./g, (_m, kg) => "The price is based on an expected purchase volume of " + kg + " kg per month.")
+    .replace(/Minimumsbestilling: (\d+) (?:levering|leveringer) fordelt over et år\./g, (_m, n) => "Minimum order: " + n + " " + (Number(n) === 1 ? "delivery" : "deliveries") + " per year.")
+    .replace(/Vi foreslår en løbende kaffeaftale med levering af ca\. ([\d.,\[\]a-zA-Z]+) kg kaffe pr\. måned\./g, (_m,kg) => "We propose an ongoing coffee supply agreement with delivery of approximately " + kg + " kg of coffee per month.")
+    .replace(/Som udgangspunkt sender vi bønnerne løbende, baseret på det aftalte månedlige forbrugsestimat på ([\d.,\[\]a-zA-Z]+) kg\. Har I for meget eller for lidt på lager, giver I blot besked, så sætter vi forsendelserne på pause eller justerer dem\. Dog er I forpligtet til at aftage den forventede mængde\./g, (_m,kg) => "We normally send coffee beans on a rolling basis according to the agreed estimate of " + kg + " kg per month. If you have too much or too little in stock, simply let us know and we can pause or adjust shipments. You are still committed to purchasing the agreed quantity.")
+    .replace(/Formalet kaffe fås kun som Early Bird\. ([^<]+) leveres kun som hele bønner i 1 kg poser\./g, (_m,beans) => "Only Early Bird is available as ground coffee. " + beans + " is supplied as whole beans in 1 kg bags.")
+    .replaceAll("• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Lys&amp;Fyldig mælkepulver", "• Estimated at 10% of monthly consumption – BKI Professional light and creamy milk powder")
+    .replaceAll("• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Cremet&amp;Sød kakaopulver", "• Estimated at 10% of monthly consumption – BKI Professional rich and sweet chocolate powder");
+  for (const [da, en] of EN_OFFER_STRINGS) result = result.replaceAll(da, en);
+  const date = s.udloeb ? new Date(s.udloeb + "T00:00:00") : null;
+  const dateText = date && !isNaN(date) ? date.toLocaleDateString("en-GB", {day:"numeric",month:"long",year:"numeric"}) : null;
+  if (dateText) result = result.replace(/Tilbuddet er gyldigt til [^<]+\./g, "Offer valid until " + dateText + ".");
+  result = result
+    .replaceAll(" – Kaffeløsning", " – Coffee Solution")
+    .replaceAll("Hej ", "Dear ")
+    .replaceAll(" kr. pr. kop", " DKK per cup")
+    .replaceAll(" kr. pr. kg", " DKK per kg")
+    .replaceAll(" kr. pr. måned", " DKK per month")
+    .replace(/>Pris</g, ">Price<")
+    .replaceAll("pr. kop", "per cup")
+    .replaceAll("pr. kg", "per kg")
+    .replaceAll("[Virksomhed]", "[Company]")
+    .replaceAll("[Kontaktperson]", "[Contact person]")
+    .replaceAll("[Koppris]", "[Price per cup]")
+    .replaceAll("[Pris]", "[Price]")
+    .replaceAll("[antal]", "[quantity]");
+  return result.replace("Svar%20p%C3%A5%20tilbud", "Reply%20to%20offer");
+}
+
 function buildEmail(s) {
+  if (s.sprog === "en") {
+    // Only built-in text is translated; customer-entered copy stays untouched.
+    const tokens = { firma:"__BB_COMPANY_SENTINEL__", navn:"__BB_CONTACT_SENTINEL__", intro:"__BB_INTRO_SENTINEL__" };
+    const raw = buildEmail({ ...s, ...tokens, sprog:"da" });
+    return englishOfferHtml(raw, s)
+      .replaceAll(tokens.firma, esc(s.firma || "[Company]"))
+      .replaceAll(tokens.navn, esc(s.navn || "[Contact person]"))
+      .replaceAll(tokens.intro, esc(s.intro).replace(/\n/g, "<br>"));
+  }
+
   const m = MACH[s.maskine];
   const firma = s.firma || "[Virksomhed]";
   const navn = s.navn || "[Kontaktperson]";
