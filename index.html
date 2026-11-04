@@ -905,6 +905,207 @@ const DEFAULT_INTROS = { da: DEFAULT_INTRO_DA, sv: DEFAULT_INTRO_SV, en: DEFAULT
 const standardIntro = (value, language) => Object.values(DEFAULT_INTROS).includes(value)
   ? DEFAULT_INTROS[language] : value;
 
+
+// Sælgerens redigeringssprog styres uafhængigt af kundens tilbudssprog.
+// Indhold og interne værdier ændres aldrig; kun den synlige grænseflade oversættes.
+const EDITOR_LANG_LINES = [
+  ["Tilbudsgenerator","Offertgenerator","Offer Generator"],
+  ["Tilbudssprog","Offertspråk","Offer language"],
+  ["Redigeringssprog","Redigeringsspråk","Editing language"],
+  ["Ny kunde (ryd felter)","Ny kund (rensa fält)","New customer (clear fields)"],
+  ["Kunde","Kund","Customer"],
+  ["Virksomhed","Företag","Company"],
+  ["Kontaktperson","Kontaktperson","Contact person"],
+  ["(fornavn)","(förnamn)","(first name)"],
+  ["Indledning","Inledning","Introduction"],
+  ["Tilbudstype","Offerttyp","Offer type"],
+  ["Kaffemaskine med kaffeaftale","Kaffemaskin med kaffeavtal","Coffee machine with coffee agreement"],
+  ["Kun kaffeaftale (uden maskine)","Endast kaffeavtal (utan maskin)","Coffee agreement only (no machine)"],
+  ["Maskiner","Maskiner","Machines"],
+  ["Valgte maskiner","Valda maskiner","Selected machines"],
+  ["Indstil hver maskine separat – højst 8 stk.","Konfigurera varje maskin separat – högst 8 st.","Configure each machine separately – up to 8"],
+  ["Model","Modell","Model"],
+  ["Vælg model","Välj modell","Select model"],
+  ["Fuldautomatiske","Helautomatiska","Fully automatic"],
+  ["Semiautomatiske","Halvautomatiska","Semi-automatic"],
+  ["Du kan også vælge direkte på billederne nedenfor.","Du kan också välja direkt via bilderna nedan.","You can also choose directly from the images below."],
+  ["Fuldautomatisk","Helautomatisk","Fully automatic"],
+  ["Semiautomatisk","Halvautomatisk","Semi-automatic"],
+  ["Simonelli · 1 gruppe","Simonelli · 1 grupp","Simonelli · 1 group"],
+  ["Simonelli · 2 grupper","Simonelli · 2 grupper","Simonelli · 2 groups"],
+  ["Nuova Simonelli Appia Life – 1 gruppe","Nuova Simonelli Appia Life – 1 grupp","Nuova Simonelli Appia Life – 1 group"],
+  ["Nuova Simonelli Appia Life – 2 grupper","Nuova Simonelli Appia Life – 2 grupper","Nuova Simonelli Appia Life – 2 groups"],
+  ["Valgfrit ekstraudstyr til semiautomatisk løsning","Valfri extrautrustning för halvautomatisk lösning","Optional equipment for a semi-automatic setup"],
+  ["Mahlkönig espressokværn","Mahlkönig espressokvarn","Mahlkönig espresso grinder"],
+  ["Puqpress automatisk tamper","Puqpress automatisk tamper","Puqpress automatic tamper"],
+  ["Vandforsyning","Vattenförsörjning","Water supply"],
+  ["Vælg","Välj","Select"],
+  ["Vandtank 2L","Vattentank 2L","2L water tank"],
+  ["Vandtank 5L","Vattentank 5L","5L water tank"],
+  ["Vandtank 8L","Vattentank 8L","8L water tank"],
+  ["Fastvandstilslutning med BWT Filter","Fast vattenanslutning med BWT-filter","Mains water connection with BWT filter"],
+  ["Friskmælkskøleskab 4L","Kylskåp för färsk mjölk 4L","4L fresh milk fridge"],
+  ["Betalingsløsning med kort","Kortbetalningslösning","Card payment solution"],
+  ["Ja","Ja","Yes"],
+  ["Nej","Nej","No"],
+  ["Kaffe og forbrugsvarer","Kaffe och förbrukningsvaror","Coffee and consumables"],
+  ["Kaffebønner","Kaffebönor","Coffee beans"],
+  ["(vælg en eller flere)","(välj en eller flera)","(select one or more)"],
+  ["Øvrige forbrugsvarer","Övriga förbrukningsvaror","Other consumables"],
+  ["(valgfrit)","(valfritt)","(optional)"],
+  ["Mælkepulver","Mjölkpulver","Milk powder"],
+  ["Kakaopulver","Chokladpulver","Chocolate powder"],
+  ["Pris og aftale","Pris och avtal","Price and agreement"],
+  ["Koppris","Pris per kopp","Price per cup"],
+  ["(kr.)","(DKK)","(DKK)"],
+  ["Kaffedrikkere","Kaffedrickare","Coffee drinkers"],
+  ["(2 decimaler muligt)","(upp till 2 decimaler)","(up to 2 decimals)"],
+  ["Estimeret forbrug:","Beräknad förbrukning:","Estimated consumption:"],
+  ["1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.","1 kaffedrickare = 60 koppar per månad. Avrundas till hela koppar i offerten.","1 coffee drinker = 60 cups per month. Rounded to whole cups in the offer."],
+  ["Betaling","Betalning","Billing"],
+  ["Forbrugsbaseret (min. 100 kopper)","Förbrukningsbaserat (minst 100 koppar)","Consumption-based (min. 100 cups)"],
+  ["Videresalg (min. estimeret forbrug)","Vidareförsäljning (minst beräknad förbrukning)","Resale (min. estimated consumption)"],
+  ["Flere maskiner (min. estimeret forbrug)","Flera maskiner (minst beräknad förbrukning)","Multiple machines (min. estimated consumption)"],
+  ["Øvrige maskiner (min. estimeret forbrug)","Övriga maskiner (minst beräknad förbrukning)","Other machines (min. estimated consumption)"],
+  ["Vis månedligt beløb og estimeret forbrug","Visa månadsbelopp och beräknad förbrukning","Show monthly amount and estimated consumption"],
+  ["OBS: Minimumsforbrug","OBS: Minsta förbrukning","NOTE: Minimum consumption"],
+  ["Ved eget forbrug og/eller gratis uddeling samt brug af 1 Blackbird-maskine gælder et minimum på","Vid egen förbrukning och/eller gratis utdelning med 1 Blackbird-maskin gäller minst","For own consumption and/or free distribution using one Blackbird machine, the minimum is"],
+  ["100 kopper pr. måned","100 koppar per månad","100 cups per month"],
+  ["Ved videresalg, brug af mere end 1 maskine eller brug af en ikke-Blackbird-maskine gælder et minimum svarende til","Vid vidareförsäljning, fler än 1 maskin eller en annan maskin än Blackbirds gäller ett minimum motsvarande","For resale, more than one machine, or use of a non-Blackbird machine, the minimum equals"],
+  ["det estimerede forbrug i antal kopper","det beräknade antalet koppar","the estimated number of cups"],
+  ["Minimumskopper pr. måned","Minsta antal koppar per månad","Minimum cups per month"],
+  ["Pris pr. kg","Pris per kg","Price per kg"],
+  ["Kg pr. måned","Kg per månad","Kg per month"],
+  ["Min. leveringer pr. år","Min. leveranser per år","Min. deliveries per year"],
+  ["Leveres som","Levereras som","Supplied as"],
+  ["Hele bønner i 1 kg poser","Hela bönor i 1 kg-påsar","Whole beans in 1 kg bags"],
+  ["Formalet i 500 g poser","Malet kaffe i 500 g-påsar","Ground coffee in 500 g bags"],
+  ["Formalet i 75 g poser","Malet kaffe i 75 g-påsar","Ground coffee in 75 g bags"],
+  ["(kun Early Bird)","(endast Early Bird)","(Early Bird only)"],
+  ["Tilbehør","Tillbehör","Accessories"],
+  ["Aftaleperiode","Avtalstid","Agreement term"],
+  ["(antal måneder)","(antal månader)","(number of months)"],
+  ["Nævn aftaleperiode","Ange avtalstid","Include agreement term"],
+  ["Mailen","Mejlet","Email"],
+  ["Udløbsdato","Giltighetsdatum","Expiry date"],
+  ["(valgfri, vises nederst i tilbuddet)","(valfritt, visas längst ner i offerten)","(optional, shown at the bottom of the offer)"],
+  ["Sælgers mailadresse","Säljarens e-postadress","Salesperson's email address"],
+  ["(svar-knappen i tilbuddet)","(svarsknappen i offerten)","(reply button in the offer)"],
+  ["Ikke valgt","Inte vald","Not selected"],
+  ["Kopiér tilbud","Kopiera offert","Copy offer"],
+  ["Kopiér + åbn Outlook","Kopiera + öppna Outlook","Copy + open Outlook"],
+  ["Eksportér PDF","Exportera PDF","Export PDF"],
+  ["“Kopiér + åbn Outlook” kopierer tilbuddet og åbner en ny mail med emnet udfyldt i dit standardmailprogram. Indsæt med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.","”Kopiera + öppna Outlook” kopierar offerten och öppnar ett nytt mejl med ifylld ämnesrad. Klistra in med Ctrl+V (Windows) eller Cmd+V (Mac). För PDF väljer du ”Spara som PDF” i utskriftsfönstret.","“Copy + open Outlook” copies the offer and opens a new email with the subject filled in. Paste with Ctrl+V (Windows) or Cmd+V (Mac). For a PDF, choose “Save as PDF” in the print dialog."],
+  ["Duplikér","Duplicera","Duplicate"],
+  ["Fjern","Ta bort","Remove"],
+  ["Vandforsyning mangler","Vattenförsörjning saknas","Water supply missing"],
+  ["Friskmælkskøleskab","Mjölkkyl","Milk fridge"],
+  ["Kortbetaling","Kortbetalning","Card payment"],
+  ["Fuldautomatisk baristaløsning til større kaffebehov.","Helautomatisk baristalösning för större kaffebehov.","Fully automatic barista solution for higher coffee demand."],
+  ["Fuldautomatisk løsning til mindre og mellemstore kontorer.","Helautomatisk lösning för små och medelstora kontor.","Fully automatic solution for small and medium-sized offices."],
+  ["Kompakt fuldautomatisk maskine til kontoret.","Kompakt helautomatisk kaffemaskin för kontoret.","Compact fully automatic office coffee machine."],
+  ["Semiautomatisk løsning: manuelt bryg og mælkeskum. Husk kværn og eventuelt Puqpress.","Halvautomatisk lösning: manuell bryggning och mjölkskumning. Kom ihåg kvarn och eventuellt Puqpress.","Semi-automatic setup: manual brewing and milk steaming. Remember a grinder and possibly Puqpress."],
+  ["Kontrollér før afsendelse:","Kontrollera före utskick:","Review before sending:"],
+  ["Aftaleperiode kan ikke være under 12 måneder","Avtalstiden får inte vara kortare än 12 månader","The agreement term must be at least 12 months"],
+  ["Aftaleperioden skal angives i hele måneder.","Avtalstiden måste anges i hela månader.","Enter the agreement term in whole months."],
+  ["Vælg sælgers mailadresse, inden tilbuddet sendes.","Välj säljarens e-postadress innan offerten skickas.","Select the salesperson's email address before sending."],
+  ["Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.","Den beräknade förbrukningen är under 100 koppar per månad. Kontrollera behovet.","Estimated consumption is below 100 cups per month. Check the requirements."],
+  ["Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.","Minimiförbrukningen är under 100 koppar per månad – kontrollera att det är godkänt.","Minimum consumption is below 100 cups per month – check for approval."],
+  ["Minimumsforbruget er højere end det estimerede forbrug.","Minimiförbrukningen är högre än den beräknade förbrukningen.","Minimum consumption exceeds estimated usage."],
+  ["Simonelli kræver fast vandtilslutning.","Simonelli kräver fast vattenanslutning.","Simonelli requires a mains water connection."],
+  ["Mælkepulver er ikke en integreret funktion i Simonelli.","Mjölkpulver är inte en integrerad funktion i Simonelli.","Milk powder is not a built-in Simonelli feature."],
+  ["Kakao er ikke en integreret funktion i Simonelli.","Chokladpulver är inte en integrerad funktion i Simonelli.","Chocolate powder is not a built-in Simonelli feature."],
+  ["Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.","Ingen kvarn är vald. Kontrollera att kunden har en kompatibel espressokvarn.","No grinder selected. Check whether the customer has a compatible espresso grinder."],
+  ["Kontrollér kompatibiliteten med kakaoløsningen.","Kontrollera kompatibiliteten med chokladlösningen.","Check compatibility with the chocolate powder solution."],
+  ["Jura X10 leveres kun med 5L vandtank.","Jura X10 levereras endast med en 5L vattentank.","Jura X10 is only supplied with a 5L water tank."],
+  ["Jura X10 leveres kun med 5L vandtank","Jura X10 levereras endast med 5L vattentank","Jura X10 requires a 5L water tank"],
+  ["Simonelli kan kun tilsluttes fast vand.","Simonelli kan endast anslutas till fast vatten.","Simonelli requires a mains water connection."],
+  ["Friskmælkskøleskab kan ikke vælges til Simonelli.","Kylskåp för färsk mjölk kan inte väljas till Simonelli.","A fresh milk fridge cannot be selected for Simonelli."],
+  ["Andre maskiner kræver minimum det estimerede forbrug.","Andra maskiner kräver minst den beräknade förbrukningen.","Other machines require at least the estimated consumption."],
+  ["Alt er udfyldt. Husk at gennemlæse tilbuddet inden afsendelse. Tilbuddet er klar til at kopiere.","Allt är ifyllt. Läs igenom offerten innan den skickas. Offerten är klar att kopiera.","Everything is complete. Review the offer before sending. It is ready to copy."],
+  ["Tilbuddet er kopieret. Sæt det ind i en ny mail.","Offerten har kopierats. Klistra in den i ett nytt mejl.","Offer copied. Paste it into a new email."],
+  ["Tilbuddet er kopieret. Indsæt det i den nye mail med Ctrl+V.","Offerten har kopierats. Klistra in den i det nya mejlet med Ctrl+V.","Offer copied. Paste it into the new email with Ctrl+V."],
+  ["Kopiering blev afvist her. Markér tilbuddet i udkastet og tryk Cmd+C.","Kopieringen tilläts inte här. Markera offerten i utkastet och tryck Cmd+C.","Copying was blocked. Select the offer in the preview and press Cmd+C."],
+  ["Kopiering blev afvist. Brug i stedet Kopiér tilbud.","Kopieringen nekades. Använd i stället Kopiera offert.","Copying was blocked. Use Copy offer instead."]
+];
+const EDITOR_TEXTS = Object.fromEntries(EDITOR_LANG_LINES.map(([da,sv,en])=>[da, {sv,en}]));
+const EDITOR_MISSING = [
+  ["minimumskopper pr. måned", "minsta antal koppar per månad", "minimum cups per month"],
+  ["antal kaffedrikkere", "antal kaffedrickare", "number of coffee drinkers"],
+  ["forventet kg pr. måned", "förväntat kg per månad", "expected kg per month"],
+  ["minimum estimeret forbrug", "minst beräknad förbrukning", "minimum estimated consumption"],
+  ["aftaleperiode", "avtalstid", "agreement term"], ["sælgers mailadresse", "säljarens e-postadress", "salesperson's email"],
+  ["virksomhed", "företag", "company"], ["kontaktperson", "kontaktperson", "contact person"],
+  ["kaffetype", "kaffesort", "coffee type"], ["pris pr. kg", "pris per kg", "price per kg"],
+  ["leveringsformat", "leveransformat", "delivery format"], ["antal maskiner", "antal maskiner", "number of machines"],
+  ["vandforsyning", "vattenförsörjning", "water supply"], ["koppris", "pris per kopp", "price per cup"],
+  ["maskine ", "maskin ", "machine "], ["betaling", "betalning", "billing"],
+  ["Falcon kræver 8L tank eller fastvand", "Falcon kräver en 8L tank eller fast vatten", "Falcon requires an 8L tank or mains water"],
+  ["Jura X10 kræver 5L tank", "Jura X10 kräver en 5L tank", "Jura X10 requires a 5L tank"],
+  ["Simonelli kræver fastvand", "Simonelli kräver fast vatten", "Simonelli requires mains water"],
+  ["Simonelli kan ikke have friskmælkskøleskab", "Simonelli kan inte använda färskmjölkskyl", "Simonelli cannot use a fresh milk fridge"],
+  ["mælk", "mjölk", "milk"]
+];
+function localizedEditorText(value, language) {
+  if (language === "da" || !value) return value;
+  const exact = EDITOR_TEXTS[value];
+  if (exact) return exact[language] || value;
+  const count = value.match(/^(\d+) af 8$/);
+  if (count) return count[1] + (language === "sv" ? " av 8" : " of 8");
+  const editor = value.match(/^Indstillinger for maskine (\d+)$/);
+  if (editor) return (language === "sv" ? "Inställningar för maskin " : "Settings for machine ") + editor[1];
+  const added = value.match(/^Estimeret forbrug: (.*) kopper pr\. måned$/);
+  if (added) return (language === "sv" ? "Beräknad förbrukning: " : "Estimated consumption: ") + added[1] + (language === "sv" ? " koppar per månad" : " cups per month");
+  if (value === "Maksimum 8 maskiner") return language === "sv" ? "Högst 8 maskiner" : "Maximum 8 machines";
+  if (value === "+ Tilføj maskine") return language === "sv" ? "+ Lägg till maskin" : "+ Add machine";
+  if (value.startsWith("Mangler stadig: ")) {
+    let missing = value.slice("Mangler stadig: ".length);
+    for (const [da,sv,en] of EDITOR_MISSING) missing = missing.replaceAll(da, language === "sv" ? sv : en);
+    return (language === "sv" ? "Saknas fortfarande: " : "Still missing: ") + missing;
+  }
+  if (value.startsWith("Maskine ")) {
+    const detail = value.match(/^Maskine (\d+): (.+)$/);
+    if (detail) {
+      const prefix = (language === "sv" ? "Maskin " : "Machine ") + detail[1] + ": ";
+      return prefix + (EDITOR_TEXTS[detail[2]]?.[language] || detail[2]);
+    }
+  }
+  return value;
+}
+const editorSourceText = new WeakMap();
+const editorSourceAttrs = new WeakMap();
+function applyEditorLanguage() {
+  const language = $("redigeringssprog").value;
+  document.documentElement.lang = language;
+  document.title = localizedEditorText("Tilbudsgenerator",language);
+  const root = document.querySelector(".page");
+  if (!root || typeof document.createTreeWalker !== "function") return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    const parent = node.parentElement;
+    if (!parent || parent.closest("#preview, textarea, #sprog, #redigeringssprog")) continue;
+    if (!editorSourceText.has(node)) editorSourceText.set(node, node.nodeValue);
+    const source = editorSourceText.get(node);
+    const trimmed = source.trim();
+    if (!trimmed) continue;
+    const translation = localizedEditorText(trimmed, language);
+    if (trimmed !== translation) node.nodeValue = source.replace(trimmed, translation);
+    else if (node.nodeValue !== source) node.nodeValue = source;
+  }
+  for (const element of root.querySelectorAll("[title], [placeholder], [aria-label]")) {
+    if (element.closest("#preview, #sprog, #redigeringssprog")) continue;
+    if (!editorSourceAttrs.has(element)) editorSourceAttrs.set(element, {});
+    const stored = editorSourceAttrs.get(element);
+    for (const attr of ["title","placeholder","aria-label"]) {
+      if (!element.hasAttribute(attr)) continue;
+      if (!(attr in stored)) stored[attr] = element.getAttribute(attr);
+      const translated = localizedEditorText(stored[attr], language);
+      if (element.getAttribute(attr) !== translated) element.setAttribute(attr, translated);
+    }
+  }
+}
+
 let statusTimer = null;
 function setStatus(text, kind) {
   const el = $("status");
@@ -1167,6 +1368,7 @@ document.querySelectorAll(".machine-card").forEach((card) => {
   if (periodeForKort(s)) setStatus("Aftaleperiode kan ikke være under 12 måneder", "warn");
   else if (!ready) setStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
   else setStatus("Alt er udfyldt. Husk at gennemlæse tilbuddet inden afsendelse. Tilbuddet er klar til at kopiere.", "ok");
+  applyEditorLanguage();
 }
 function flash(text, kind) {
   setStatus(text, kind);
@@ -1212,6 +1414,11 @@ $("add-machine").addEventListener("click", () => tilføjMaskine());
 $("form").addEventListener("input", update);
 $("form").addEventListener("change", update);
 $("sprog").addEventListener("change", update);
+$("redigeringssprog").addEventListener("change", () => {
+  const intro = $("intro");
+  if (Object.values(DEFAULT_INTROS).includes(intro.value)) intro.value = DEFAULT_INTROS[$("redigeringssprog").value];
+  update();
+});
 $("copy").addEventListener("click", async () => {
   if (missing(read()).length) return;
   if (await copyRich()) flash("Tilbuddet er kopieret. Sæt det ind i en ny mail.", "ok");
