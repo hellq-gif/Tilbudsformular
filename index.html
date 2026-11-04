@@ -312,9 +312,10 @@ const HEADING_FONT = FONT;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
-const fmt2 = (n) => n.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtAntal = (n) => n.toLocaleString("da-DK", { maximumFractionDigits: 2 });
-const fmtKr = (n) => (Math.round(n * 100) % 100 === 0 ? Math.round(n).toLocaleString("da-DK") : fmt2(n));
+const offerLocale = () => $("sprog").value === "en" ? "en-GB" : "da-DK";
+const fmt2 = (n) => n.toLocaleString(offerLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtAntal = (n) => n.toLocaleString(offerLocale(), { maximumFractionDigits: 2 });
+const fmtKr = (n) => (Math.round(n * 100) % 100 === 0 ? Math.round(n).toLocaleString(offerLocale()) : fmt2(n));
 const joinOg = (a) => (a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " og " + a[a.length - 1]);
 
 const KAFFE = [
@@ -424,7 +425,7 @@ const checkBullet = (t) => `<tr><td width="30" valign="top" style="padding:0 0 8
 const priceLine =(t, last) => `<tr><td bgcolor="#F6F1EA" style="background-color:#F6F1EA;padding:0 32px ${last ? 28 : 8}px 32px;font-family:${FONT};font-size:14px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
 
 function mainAftale(s) {
-  const kg = (v) => v.toLocaleString("da-DK", { maximumFractionDigits: 1 });
+  const kg = (v) => v.toLocaleString(offerLocale(), { maximumFractionDigits: 1 });
   const kgM = s.kgmaaned ? kg(s.kgmaaned) : "[antal]";
   const pris = s.kgpris ? fmt2(s.kgpris) : "[Pris]";
   const mdr = s.periode !== null && s.periode > 0 ? Math.round(s.periode) : null;
@@ -517,12 +518,25 @@ const EN_OFFER_STRINGS = [
   ["Kakaopulver", "Chocolate powder"],
   ["Ristning", "Roast"],
   ["Fylde", "Body"],
-  ["Syre", "Acidity"]
+  ["Syre", "Acidity"],
+  ["Løbende levering af kaffe", "Ongoing coffee deliveries"],
+  ["Fuld serviceaftale", "Full service agreement"],
+  ["Alle reservedele inkluderet", "All spare parts included"],
+  ["Ombytning af maskinen ved behov", "Machine replacement when needed"],
+  ["Installation", "Installation"],
+  ["Nuova Simonelli Appia Life – 1 gruppe", "Nuova Simonelli Appia Life – 1 group"],
+  ["Nuova Simonelli Appia Life – 2 grupper", "Nuova Simonelli Appia Life – 2 groups"]
 ];
 function englishOfferHtml(html, s) {
   let result = html;
   for (const [id, description] of Object.entries(EN_MACHINE_DESC)) {
-    result = result.replaceAll(esc(MACH[id].desc), esc(description));
+    const original = ["swan","falcon"].includes(id)
+      ? esc(MACH[id].desc).replace(". Maskinen tilbyder", ".<br><br>Maskinen tilbyder")
+      : esc(MACH[id].desc);
+    const translated = ["swan","falcon"].includes(id)
+      ? esc(description).replace(". The machine offers", ".<br><br>The machine offers")
+      : esc(description);
+    result = result.replaceAll(original, translated);
   }
   for (const bean of KAFFE) result = result.replaceAll(esc(bean.desc), esc(EN_BEAN_DESC[bean.name]));
   result = result
@@ -552,7 +566,7 @@ function englishOfferHtml(html, s) {
     .replace(/Minimumsbestilling: (\d+) (?:levering|leveringer) fordelt over et år\./g, (_m, n) => "Minimum order: " + n + " " + (Number(n) === 1 ? "delivery" : "deliveries") + " per year.")
     .replace(/Vi foreslår en løbende kaffeaftale med levering af ca\. ([\d.,\[\]a-zA-Z]+) kg kaffe pr\. måned\./g, (_m,kg) => "We propose an ongoing coffee supply agreement with delivery of approximately " + kg + " kg of coffee per month.")
     .replace(/Som udgangspunkt sender vi bønnerne løbende, baseret på det aftalte månedlige forbrugsestimat på ([\d.,\[\]a-zA-Z]+) kg\. Har I for meget eller for lidt på lager, giver I blot besked, så sætter vi forsendelserne på pause eller justerer dem\. Dog er I forpligtet til at aftage den forventede mængde\./g, (_m,kg) => "We normally send coffee beans on a rolling basis according to the agreed estimate of " + kg + " kg per month. If you have too much or too little in stock, simply let us know and we can pause or adjust shipments. You are still committed to purchasing the agreed quantity.")
-    .replace(/Formalet kaffe fås kun som Early Bird\. ([^<]+) leveres kun som hele bønner i 1 kg poser\./g, (_m,beans) => "Only Early Bird is available as ground coffee. " + beans + " is supplied as whole beans in 1 kg bags.")
+    .replace(/Formalet kaffe fås kun som Early Bird\. ([^<]+) leveres kun som hele bønner i 1 kg poser\./g, (_m,beans) => "Only Early Bird is available as ground coffee. " + beans + (beans.includes(" og ") || beans.includes(", ") ? " are supplied" : " is supplied") + " as whole beans in 1 kg bags.")
     .replaceAll("• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Lys&amp;Fyldig mælkepulver", "• Estimated at 10% of monthly consumption – BKI Professional light and creamy milk powder")
     .replaceAll("• Estimeret 10% af samlede forbrug pr. md. - BKI Professional Cremet&amp;Sød kakaopulver", "• Estimated at 10% of monthly consumption – BKI Professional rich and sweet chocolate powder");
   for (const [da, en] of EN_OFFER_STRINGS) result = result.replaceAll(da, en);
@@ -565,6 +579,7 @@ function englishOfferHtml(html, s) {
     .replaceAll(" kr. pr. kop", " DKK per cup")
     .replaceAll(" kr. pr. kg", " DKK per kg")
     .replaceAll(" kr. pr. måned", " DKK per month")
+    .replaceAll(" kr. <span", " DKK <span")
     .replace(/>Pris</g, ">Price<")
     .replaceAll("pr. kop", "per cup")
     .replaceAll("pr. kg", "per kg")
@@ -606,8 +621,8 @@ function buildEmail(s) {
   incl.push("installation", "fuld serviceaftale", "reservedele", "ombytning ved behov");
 
   const prisTxt = s.pris ? fmt2(s.pris) : "[Koppris]";
-  const kopper = s.kopper ? Math.round(s.kopper).toLocaleString("da-DK") : "[antal]";
-  const estimeret = s.estimeret !== null && s.estimeret > 0 ? s.estimeret.toLocaleString("da-DK") : "[antal]";
+  const kopper = s.kopper ? Math.round(s.kopper).toLocaleString(offerLocale()) : "[antal]";
+  const estimeret = s.estimeret !== null && s.estimeret > 0 ? s.estimeret.toLocaleString(offerLocale()) : "[antal]";
   const aktivtAntal = s.model === "fast" ? s.estimeret : s.kopper;
   const betaling = s.pris && aktivtAntal ? fmtKr(s.pris * aktivtAntal) : "[beløb]";
   const modelLine = "Faktureres ud fra estimeret forbrug.";
