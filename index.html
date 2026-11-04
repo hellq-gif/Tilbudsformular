@@ -84,6 +84,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .estimat-box { padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:6px; font-size:14px; }
 .estimat-box strong { font-weight:700; }
 .estimat-box small { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
+/* Intern vejledning til sælgeren; vises kun i formularen, aldrig i kundetilbuddet. */
+.betalings-info { padding:13px 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface); font-size:13px; line-height:1.6; color:var(--ink); }
+.betalings-info strong { display:block; margin-bottom:7px; font-size:13px; font-weight:700; }
+.betalings-info p { margin:0; }
+.betalings-info p + p { margin-top:10px; }
 .warnings { padding:12px 14px; border:1px solid #E7BD75; background:var(--warn-bg); color:var(--warn-ink); border-radius:6px; font-size:13px; }
 .warnings strong { display:block; margin-bottom:3px; }
 .warnings ul { margin:4px 0 0; padding-left:18px; }
@@ -192,9 +197,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
           <div class="estimat-box" aria-live="polite">Estimeret forbrug: <strong id="estimat">600 kopper pr. måned</strong><small>1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.</small></div>
           <div class="field"><label for="model">Betaling</label>
-            <select id="model"><option value="min" selected>Minimumsforbrug pr. måned</option><option value="fast">Fast betaling efter estimeret forbrug</option></select></div>
-          <div class="field" id="minimum-kopper"><label for="kopper">Minimumskopper pr. måned</label><input type="text" id="kopper" inputmode="numeric" value="100" autocomplete="off"></div>
+            <select id="model"><option value="min" selected>Forbrugsbaseret (min. 100 kopper)</option><option value="fast">Videresalg (min. estimeret forbrug)</option></select></div>
           <label class="check"><input type="checkbox" id="vis-maanedspris"> Vis månedligt beløb i tilbuddet</label>
+          <div class="betalings-info" role="note" aria-label="Vejledning om minimumsforbrug">
+            <strong>OBS: Minimumsforbrug</strong>
+            <p>Ved eget forbrug og/eller gratis uddeling samt brug af 1 Blackbird-maskine gælder et minimum på <b>100 kopper pr. måned</b>.</p>
+            <p>Ved videresalg, brug af mere end 1 maskine eller brug af en ikke-Blackbird-maskine gælder et minimum svarende til <b>det estimerede forbrug i antal kopper</b>.</p>
+          </div>
+          <div class="field" id="minimum-kopper"><label for="kopper">Minimumskopper pr. måned</label><input type="text" id="kopper" inputmode="numeric" value="100" autocomplete="off"></div>
         </div>
         <div id="aftale-pris" class="blok" hidden>
           <div class="row">
@@ -335,7 +345,7 @@ function missing(s) {
   if (!s.kaffe.length) m.push("kaffetype");
   if (s.pris === null || s.pris <= 0) m.push("koppris");
   if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
-  if (s.model === "min" && (s.kopper === null || s.kopper <= 0)) m.push("minimumskopper pr. måned");
+  if (s.model === "min" && (s.kopper === null || s.kopper < 100)) m.push("minimumskopper pr. måned (minimum 100)");
   if (periodeForKort(s) || (!s.ingenper && (s.periode === null || !Number.isInteger(s.periode)))) m.push("aftaleperiode (minimum 12 måneder)");
   if (!s.mail) m.push("sælgers mailadresse");
   return m;
