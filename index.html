@@ -572,7 +572,7 @@ function englishOfferHtml(html, s) {
   for (const [da, en] of EN_OFFER_STRINGS) result = result.replaceAll(da, en);
   const date = s.udloeb ? new Date(s.udloeb + "T00:00:00") : null;
   const dateText = date && !isNaN(date) ? date.toLocaleDateString("en-GB", {day:"numeric",month:"long",year:"numeric"}) : null;
-  if (dateText) result = result.replace(/Tilbuddet er gyldigt til [^<]+\./g, "Offer valid until " + dateText + ".");
+  if (dateText) result = result.replace(/Tilbuddet er gyldigt til [^<]+(?=<\/strong>)/g, "Offer valid until " + dateText + ".");
   result = result
     .replaceAll(" – Kaffeløsning", " – Coffee Solution")
     .replaceAll("Hej ", "Dear ")
@@ -805,6 +805,42 @@ const UI_EN = {
   "Kompakt fuldautomatisk maskine til kontoret.":"Compact, fully automatic office coffee machine.",
   "Semiautomatisk løsning: manuelt bryg og mælkeskum. Husk kværn og eventuelt Puqpress.":"Semi-automatic setup: manual espresso and milk steaming. Remember to include a grinder and, if needed, Puqpress."
 };
+
+const EN_INTERNAL = [
+  ["Vælg sælgers mailadresse, inden tilbuddet sendes.", "Select the salesperson's email address before sending."],
+  ["Aftaleperiode kan ikke være under 12 måneder", "The agreement term must be at least 12 months."],
+  ["Aftaleperioden skal angives i hele måneder.", "Enter the agreement term in whole months."],
+  ["Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.", "Estimated consumption is below 100 cups per month. Check the customer's needs."],
+  ["Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.", "Minimum consumption is below 100 cups per month – check for approval."],
+  ["Minimumsforbruget er højere end det estimerede forbrug.", "Minimum consumption exceeds the estimated usage."],
+  ["Simonelli kræver fast vandtilslutning.", "Simonelli requires mains water."],
+  ["Mælkepulver er ikke en integreret funktion i Simonelli.", "Milk powder is not built into Simonelli."],
+  ["Kakao er ikke en integreret funktion i Simonelli.", "Chocolate powder is not built into Simonelli."],
+  ["Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.", "No grinder selected. Check whether the customer has a compatible espresso grinder."],
+  ["Kontrollér kompatibiliteten med kakaoløsningen.", "Check compatibility with the chocolate powder solution."],
+  ["Jura X10 leveres kun med 5L vandtank.", "Jura X10 is supplied with a 5L water tank only."],
+  ["virksomhed", "company"], ["kontaktperson", "contact person"], ["kaffetype", "coffee type"],
+  ["pris pr. kg", "price per kg"], ["forventet kg pr. måned", "expected kg per month"],
+  ["leveringsformat", "delivery format"], ["antal maskiner", "number of machines"],
+  ["vandforsyning", "water supply"], ["koppris", "price per cup"],
+  ["antal kaffedrikkere", "number of coffee drinkers"], ["minimumskopper pr. måned", "minimum cups per month"],
+  ["aftaleperiode", "agreement term"], ["sælgers mailadresse", "salesperson's email"],
+  ["maskine ", "machine "], ["betaling", "billing"], ["model", "model"],
+  ["Falcon kræver 8L tank eller fastvand", "Falcon requires an 8L tank or mains water"],
+  ["Jura X10 kræver 5L tank", "Jura X10 requires a 5L tank"],
+  ["Simonelli kræver fastvand", "Simonelli requires mains water"],
+  ["Simonelli kan ikke have friskmælkskøleskab", "Simonelli cannot use a fresh milk fridge"],
+  ["mælk", "milk"], ["andre maskiner", "other machines"],
+  ["minimum estimeret forbrug", "minimum estimated consumption"],
+  ["minimum 100", "minimum 100"],
+  ["ikke-Blackbird", "non-Blackbird"]
+];
+function translateInternal(text) {
+  let out = text;
+  for (const [da,en] of EN_INTERNAL) out = out.replaceAll(da,en);
+  return out;
+}
+
 const originalUiNodes = new WeakMap();
 function translateInterface() {
   const english = $("sprog").value === "en";
@@ -835,7 +871,7 @@ function showStatus(text, kind) {
     "Kopiering blev afvist. Brug i stedet Kopiér tilbud.":"Copying was blocked. Use Copy offer instead.",
     "Tilbuddet er kopieret. Indsæt det i den nye mail med Ctrl+V.":"Offer copied. Paste it into the new email with Ctrl+V."
   };
-  if (text.startsWith("Mangler stadig: ")) text = "Still missing: " + text.slice("Mangler stadig: ".length);
+  if (text.startsWith("Mangler stadig: ")) text = "Still missing: " + translateInternal(text.slice("Mangler stadig: ".length));
   else text = fixed[text] || text;
   setStatus(text, kind);
 }
@@ -1091,9 +1127,9 @@ document.querySelectorAll(".machine-card").forEach((card) => {
   warningBox.replaceChildren();
   if (warnings.length) {
     const heading = document.createElement("strong");
-    heading.textContent = "Kontrollér før afsendelse:";
+    heading.textContent = s.sprog === "en" ? "Review before sending:" : "Kontrollér før afsendelse:";
     const list = document.createElement("ul");
-    warnings.forEach((warning) => { const li = document.createElement("li"); li.textContent = warning; list.appendChild(li); });
+    warnings.forEach((warning) => { const li = document.createElement("li"); li.textContent = s.sprog === "en" ? translateInternal(warning) : warning; list.appendChild(li); });
     warningBox.append(heading, list);
   }
   $("preview").innerHTML = buildEmail(s);
@@ -1170,7 +1206,7 @@ $("copy-outlook").addEventListener("click", async () => {
     return;
   }
   flash("Tilbuddet er kopieret. Indsæt det i den nye mail med Ctrl+V.", "ok");
-  window.location.href = "mailto:?subject=" + encodeURIComponent("Tilbud fra Blackbird Coffee ☕");
+  window.location.href = "mailto:?subject=" + encodeURIComponent($("sprog").value === "en" ? "Offer from Blackbird Coffee ☕" : "Tilbud fra Blackbird Coffee ☕");
 });
 $("pdf").addEventListener("click", () => {
   if (missing(read()).length) return;
