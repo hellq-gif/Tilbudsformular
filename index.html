@@ -155,7 +155,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <h1>Tilbudsgenerator</h1>
     </div>
     <div class="header-actions">
-      <label for="sprog">Sprog / Language</label>
+      <label for="sprog">Tilbudssprog</label>
       <select id="sprog" aria-label="Tilbudssprog / Offer language">
         <option value="da" selected>Dansk</option>
         <option value="en">English</option>
@@ -599,7 +599,7 @@ function buildEmail(s) {
     return englishOfferHtml(raw, s)
       .replaceAll(tokens.firma, esc(s.firma || "[Company]"))
       .replaceAll(tokens.navn, esc(s.navn || "[Contact person]"))
-      .replaceAll(tokens.intro, esc(s.intro).replace(/\n/g, "<br>"));
+      .replaceAll(tokens.intro, esc(s.intro === DEFAULT_INTRO_DA ? DEFAULT_INTRO_EN : s.intro).replace(/\n/g, "<br>"));
   }
 
   const m = MACH[s.maskine];
@@ -709,172 +709,9 @@ ${para("Sig endelig til, hvis der er noget, I ønsker tilpasset.", "32px 40px 0 
 }
 
 
-// Interface translations apply only to form/controls. The offer HTML has its own translation.
+// Kun kundetilbuddet oversættes. Alle sælgerfelter og statusbeskeder er på dansk.
 const DEFAULT_INTRO_DA = "Tak for en god snak. Som lovet kommer her et samlet og overskueligt oplæg på en professionel kaffeløsning fra os 🙂";
 const DEFAULT_INTRO_EN = "Thank you for the great conversation. As promised, here is a clear overview of a professional coffee solution from Blackbird Coffee. 🙂";
-const UI_EN = {
-  "Tilbudsgenerator":"Offer Generator",
-  "Ny kunde (ryd felter)":"New customer (clear fields)",
-  "Kunde":"Customer",
-  "Virksomhed":"Company",
-  "Kontaktperson":"Contact person",
-  "(fornavn)":"(first name)",
-  "Indledning":"Introduction",
-  "Tilbudstype":"Offer type",
-  "Kaffemaskine med kaffeaftale":"Coffee machine with coffee supply agreement",
-  "Kun kaffeaftale (uden maskine)":"Coffee supply only (no machine)",
-  "Maskiner":"Machines",
-  "Valgte maskiner":"Selected machines",
-  "Indstil hver maskine separat – højst 8 stk.":"Configure each machine separately – up to 8",
-  "Model":"Model",
-  "Vælg model":"Select model",
-  "Fuldautomatiske":"Fully automatic",
-  "Semiautomatiske":"Semi-automatic",
-  "Du kan også vælge direkte på billederne nedenfor.":"You can also choose a machine from the pictures below.",
-  "Fuldautomatisk":"Fully automatic",
-  "Semiautomatisk":"Semi-automatic",
-  "Valgfrit ekstraudstyr til semiautomatisk løsning":"Optional equipment for a semi-automatic setup",
-  "Mahlkönig espressokværn":"Mahlkönig espresso grinder",
-  "Puqpress automatisk tamper":"Puqpress automatic tamper",
-  "Vandforsyning":"Water supply",
-  "Vælg":"Select",
-  "Vandtank 2L":"2L water tank",
-  "Vandtank 5L":"5L water tank",
-  "Vandtank 8L":"8L water tank",
-  "Fastvandstilslutning med BWT Filter":"Mains water connection with BWT filter",
-  "Friskmælkskøleskab 4L":"4L fresh milk fridge",
-  "Betalingsløsning med kort":"Card payment solution",
-  "Ja":"Yes",
-  "Nej":"No",
-  "Kaffe og forbrugsvarer":"Coffee and consumables",
-  "Kaffebønner":"Coffee beans",
-  "(vælg en eller flere)":"(select one or more)",
-  "Øvrige forbrugsvarer":"Other consumables",
-  "(valgfrit)":"(optional)",
-  "Mælkepulver":"Milk powder",
-  "Kakaopulver":"Chocolate powder",
-  "Pris og aftale":"Price and agreement",
-  "Koppris":"Price per cup",
-  "(kr.)":"(DKK)",
-  "Kaffedrikkere":"Coffee drinkers",
-  "(2 decimaler muligt)":"(up to 2 decimals)",
-  "1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.":"1 coffee drinker = 60 cups per month. Rounded to whole cups in the offer.",
-  "Betaling":"Billing",
-  "Forbrugsbaseret (min. 100 kopper)":"Consumption-based (min. 100 cups)",
-  "Videresalg (min. estimeret forbrug)":"Resale (min. estimated consumption)",
-  "Vis månedligt beløb i tilbuddet":"Show monthly amount in the offer",
-  "OBS: Minimumsforbrug":"NOTE: Minimum consumption",
-  "Ved eget forbrug og/eller gratis uddeling samt brug af 1 Blackbird-maskine gælder et minimum på":"For own consumption and/or free distribution using one Blackbird machine, the minimum is",
-  "100 kopper pr. måned":"100 cups per month",
-  "Ved videresalg, brug af mere end 1 maskine eller brug af en ikke-Blackbird-maskine gælder et minimum svarende til":"For resale, more than one machine, or use of a non-Blackbird machine, the minimum equals",
-  "det estimerede forbrug i antal kopper":"the estimated number of cups",
-  "Minimumskopper pr. måned":"Minimum cups per month",
-  "Pris pr. kg":"Price per kg",
-  "Kg pr. måned":"Kg per month",
-  "Min. leveringer pr. år":"Min. deliveries per year",
-  "Leveres som":"Supplied as",
-  "(kun Early Bird)":"(Early Bird only)",
-  "Hele bønner i 1 kg poser":"Whole beans in 1 kg bags",
-  "Formalet i 500 g poser":"Ground coffee in 500 g bags",
-  "Formalet i 75 g poser":"Ground coffee in 75 g bags",
-  "Tilbehør":"Accessories",
-  "Aftaleperiode":"Agreement term",
-  "(antal måneder)":"(number of months)",
-  "Nævn aftaleperiode":"Include agreement term",
-  "Mailen":"Email",
-  "Udløbsdato":"Expiry date",
-  "(valgfri, vises nederst i tilbuddet)":"(optional, shown at the bottom of the offer)",
-  "Sælgers mailadresse":"Salesperson's email address",
-  "(svar-knappen i tilbuddet)":"(reply button in the offer)",
-  "Ikke valgt":"Not selected",
-  "Kopiér tilbud":"Copy offer",
-  "Kopiér + åbn Outlook":"Copy + open Outlook",
-  "Eksportér PDF":"Export PDF",
-  "“Kopiér + åbn Outlook” kopierer tilbuddet og åbner en ny mail med emnet udfyldt i dit standardmailprogram. Indsæt med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.":"“Copy + open Outlook” copies the offer and opens a new email with a subject line. Paste using Ctrl+V (Windows) or Cmd+V (Mac). To save a PDF, choose “Save as PDF” in the print dialog.",
-  "Duplikér":"Duplicate",
-  "Fjern":"Remove",
-  "Vandforsyning mangler":"Water supply missing",
-  "Friskmælkskøleskab":"Milk fridge",
-  "Kortbetaling":"Card payment",
-  "Nuova Simonelli Appia Life – 1 gruppe":"Nuova Simonelli Appia Life – 1 group",
-  "Nuova Simonelli Appia Life – 2 grupper":"Nuova Simonelli Appia Life – 2 groups",
-  "Simonelli · 1 gruppe":"Simonelli · 1 group",
-  "Simonelli · 2 grupper":"Simonelli · 2 groups",
-  "Fuldautomatisk baristaløsning til større kaffebehov.":"Fully automatic barista solution for larger coffee needs.",
-  "Fuldautomatisk løsning til mindre og mellemstore kontorer.":"Fully automatic solution for small and medium-sized offices.",
-  "Kompakt fuldautomatisk maskine til kontoret.":"Compact, fully automatic office coffee machine.",
-  "Semiautomatisk løsning: manuelt bryg og mælkeskum. Husk kværn og eventuelt Puqpress.":"Semi-automatic setup: manual espresso and milk steaming. Remember to include a grinder and, if needed, Puqpress."
-};
-
-const EN_INTERNAL = [
-  ["Vælg sælgers mailadresse, inden tilbuddet sendes.", "Select the salesperson's email address before sending."],
-  ["Aftaleperiode kan ikke være under 12 måneder", "The agreement term must be at least 12 months."],
-  ["Aftaleperioden skal angives i hele måneder.", "Enter the agreement term in whole months."],
-  ["Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.", "Estimated consumption is below 100 cups per month. Check the customer's needs."],
-  ["Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.", "Minimum consumption is below 100 cups per month – check for approval."],
-  ["Minimumsforbruget er højere end det estimerede forbrug.", "Minimum consumption exceeds the estimated usage."],
-  ["Simonelli kræver fast vandtilslutning.", "Simonelli requires mains water."],
-  ["Mælkepulver er ikke en integreret funktion i Simonelli.", "Milk powder is not built into Simonelli."],
-  ["Kakao er ikke en integreret funktion i Simonelli.", "Chocolate powder is not built into Simonelli."],
-  ["Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.", "No grinder selected. Check whether the customer has a compatible espresso grinder."],
-  ["Kontrollér kompatibiliteten med kakaoløsningen.", "Check compatibility with the chocolate powder solution."],
-  ["Jura X10 leveres kun med 5L vandtank.", "Jura X10 is supplied with a 5L water tank only."],
-  ["virksomhed", "company"], ["kontaktperson", "contact person"], ["kaffetype", "coffee type"],
-  ["pris pr. kg", "price per kg"], ["forventet kg pr. måned", "expected kg per month"],
-  ["leveringsformat", "delivery format"], ["antal maskiner", "number of machines"],
-  ["vandforsyning", "water supply"], ["koppris", "price per cup"],
-  ["antal kaffedrikkere", "number of coffee drinkers"], ["minimumskopper pr. måned", "minimum cups per month"],
-  ["aftaleperiode", "agreement term"], ["sælgers mailadresse", "salesperson's email"],
-  ["maskine ", "machine "], ["betaling", "billing"], ["model", "model"],
-  ["Falcon kræver 8L tank eller fastvand", "Falcon requires an 8L tank or mains water"],
-  ["Jura X10 kræver 5L tank", "Jura X10 requires a 5L tank"],
-  ["Simonelli kræver fastvand", "Simonelli requires mains water"],
-  ["Simonelli kan ikke have friskmælkskøleskab", "Simonelli cannot use a fresh milk fridge"],
-  ["mælk", "milk"], ["andre maskiner", "other machines"],
-  ["minimum estimeret forbrug", "minimum estimated consumption"],
-  ["minimum 100", "minimum 100"],
-  ["ikke-Blackbird", "non-Blackbird"]
-];
-function translateInternal(text) {
-  let out = text;
-  for (const [da,en] of EN_INTERNAL) out = out.replaceAll(da,en);
-  return out;
-}
-
-const originalUiNodes = new WeakMap();
-function translateInterface() {
-  const english = $("sprog").value === "en";
-  if (document.documentElement) document.documentElement.lang = english ? "en" : "da";
-  document.title = english ? "Offer Generator" : "Tilbudsgenerator";
-  if (typeof document.createTreeWalker !== "function") return;
-  const root = document.querySelector(".page");
-  if (!root) return;
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let node;
-  while ((node = walker.nextNode())) {
-    const parent = node.parentElement;
-    if (!parent || parent.closest("#preview, #advarsler, #status, textarea")) continue;
-    if (parent.closest('option[value="fast"]')) continue; // Filled dynamically by opdaterBetalingsvalg.
-    const original = originalUiNodes.has(node) ? originalUiNodes.get(node) : node.nodeValue;
-    if (!originalUiNodes.has(node)) originalUiNodes.set(node, original);
-    const translated = UI_EN[original.trim()];
-    if (translated) node.nodeValue = english ? original.replace(original.trim(), translated) : original;
-  }
-}
-function showStatus(text, kind) {
-  if ($("sprog").value !== "en") return setStatus(text, kind);
-  const fixed = {
-    "Aftaleperiode kan ikke være under 12 måneder":"The agreement term must be at least 12 months.",
-    "Alt er udfyldt. Husk at gennemlæse tilbuddet inden afsendelse. Tilbuddet er klar til at kopiere.":"Everything is complete. Review the offer before sending. It is ready to copy.",
-    "Tilbuddet er kopieret. Sæt det ind i en ny mail.":"Offer copied. Paste it into a new email.",
-    "Kopiering blev afvist her. Markér tilbuddet i udkastet og tryk Cmd+C.":"Copying was blocked. Select the offer and press Cmd+C.",
-    "Kopiering blev afvist. Brug i stedet Kopiér tilbud.":"Copying was blocked. Use Copy offer instead.",
-    "Tilbuddet er kopieret. Indsæt det i den nye mail med Ctrl+V.":"Offer copied. Paste it into the new email with Ctrl+V."
-  };
-  if (text.startsWith("Mangler stadig: ")) text = "Still missing: " + translateInternal(text.slice("Mangler stadig: ".length));
-  else text = fixed[text] || text;
-  setStatus(text, kind);
-}
 
 let statusTimer = null;
 function setStatus(text, kind) {
@@ -964,12 +801,9 @@ let ikkeBlackbirdBetalingAktiv = false;
 function opdaterBetalingsvalg(maskine) {
   const ikkeBlackbird = maskiner.length > 1 || (Boolean(maskine) && !erBlackbirdMaskine(maskine));
   const opt = $("model").querySelector('option[value="fast"]');
-  const en = $("sprog").value === "en";
-  opt.textContent = maskiner.length > 1
-    ? (en ? "Multiple machines (min. estimated consumption)" : "Flere maskiner (min. estimeret forbrug)")
-    : maskine && !erBlackbirdMaskine(maskine)
-    ? (en ? "Other machines (min. estimated consumption)" : "Øvrige maskiner (min. estimeret forbrug)")
-    : (en ? "Resale (min. estimated consumption)" : "Videresalg (min. estimeret forbrug)");
+  opt.textContent = maskiner.length > 1 ? "Flere maskiner (min. estimeret forbrug)"
+    : maskine && !erBlackbirdMaskine(maskine) ? "Øvrige maskiner (min. estimeret forbrug)"
+    : "Videresalg (min. estimeret forbrug)";
   const menu = $("model");
   const forbrugsbaseret = menu.querySelector('option[value="min"]');
   if (ikkeBlackbird) {
@@ -1086,11 +920,10 @@ function tegnMaskinliste() {
     return item;
   });
   list.replaceChildren(...items);
-  const en = $("sprog").value === "en";
-  $("machine-count").textContent = maskiner.length + (en ? " of 8" : " af 8");
-  $("machine-editor-label").textContent = (en ? "Settings for machine " : "Indstillinger for maskine ") + (aktivMaskine + 1);
+  $("machine-count").textContent = maskiner.length + " af 8";
+  $("machine-editor-label").textContent = "Indstillinger for maskine " + (aktivMaskine + 1);
   $("add-machine").disabled = maskiner.length >= 8;
-  $("add-machine").textContent = maskiner.length >= 8 ? (en ? "Maximum 8 machines" : "Maksimum 8 maskiner") : (en ? "+ Add machine" : "+ Tilføj maskine");
+  $("add-machine").textContent = maskiner.length >= 8 ? "Maksimum 8 maskiner" : "+ Tilføj maskine";
 }
 
 function update() {
@@ -1120,31 +953,31 @@ document.querySelectorAll(".machine-card").forEach((card) => {
     : s.maskine === "falcon" ? "Fuldautomatisk baristaløsning til større kaffebehov."
     : s.maskine === "swan" ? "Fuldautomatisk løsning til mindre og mellemstore kontorer."
     : s.maskine === "jura" ? "Kompakt fuldautomatisk maskine til kontoret." : "";
-  $("estimat").textContent = s.estimeret === null || s.estimeret <= 0 ? "–" : s.estimeret.toLocaleString(s.sprog === "en" ? "en-GB" : "da-DK") + (s.sprog === "en" ? " cups per month" : " kopper pr. måned");
+  $("estimat").textContent = s.estimeret === null || s.estimeret <= 0 ? "–" : s.estimeret.toLocaleString("da-DK") + " kopper pr. måned";
   const warnings = findWarnings(s);
   const warningBox = $("advarsler");
   warningBox.hidden = warnings.length === 0;
   warningBox.replaceChildren();
   if (warnings.length) {
     const heading = document.createElement("strong");
-    heading.textContent = s.sprog === "en" ? "Review before sending:" : "Kontrollér før afsendelse:";
+    heading.textContent = "Kontrollér før afsendelse:";
     const list = document.createElement("ul");
-    warnings.forEach((warning) => { const li = document.createElement("li"); li.textContent = s.sprog === "en" ? translateInternal(warning) : warning; list.appendChild(li); });
+    warnings.forEach((warning) => { const li = document.createElement("li"); li.textContent = warning; list.appendChild(li); });
     warningBox.append(heading, list);
   }
   $("preview").innerHTML = buildEmail(s);
-  translateInterface();
+  $("preview").lang = s.sprog;
   const miss = missing(s);
   const ready = miss.length === 0;
   $("copy").disabled = !ready;
   $("copy-outlook").disabled = !ready;
   $("pdf").disabled = !ready;
-  if (periodeForKort(s)) showStatus("Aftaleperiode kan ikke være under 12 måneder", "warn");
-  else if (!ready) showStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
-  else showStatus("Alt er udfyldt. Husk at gennemlæse tilbuddet inden afsendelse. Tilbuddet er klar til at kopiere.", "ok");
+  if (periodeForKort(s)) setStatus("Aftaleperiode kan ikke være under 12 måneder", "warn");
+  else if (!ready) setStatus("Mangler stadig: " + miss.join(", ") + ".", "warn");
+  else setStatus("Alt er udfyldt. Husk at gennemlæse tilbuddet inden afsendelse. Tilbuddet er klar til at kopiere.", "ok");
 }
 function flash(text, kind) {
-  showStatus(text, kind);
+  setStatus(text, kind);
   clearTimeout(statusTimer);
   statusTimer = setTimeout(update, 3500);
 }
@@ -1186,12 +1019,7 @@ document.querySelectorAll("[data-product-img]").forEach((img) => { img.src = IMG
 $("add-machine").addEventListener("click", () => tilføjMaskine());
 $("form").addEventListener("input", update);
 $("form").addEventListener("change", update);
-$("sprog").addEventListener("change", () => {
-  const intro = $("intro");
-  if ($("sprog").value === "en" && intro.value === DEFAULT_INTRO_DA) intro.value = DEFAULT_INTRO_EN;
-  else if ($("sprog").value === "da" && intro.value === DEFAULT_INTRO_EN) intro.value = DEFAULT_INTRO_DA;
-  update();
-});
+$("sprog").addEventListener("change", update);
 $("copy").addEventListener("click", async () => {
   if (missing(read()).length) return;
   if (await copyRich()) flash("Tilbuddet er kopieret. Sæt det ind i en ny mail.", "ok");
