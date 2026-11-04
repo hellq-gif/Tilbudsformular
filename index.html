@@ -654,9 +654,9 @@ function buildEmail(s) {
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
 
   const lines = [priceLine(`Prisen inkluderer ${joinOg(incl)}.`)];
-  if (s.visMaanedspris && s.drikkere) {
+  if (s.drikkere) {
     const betegnelse = s.drikkere === 1 ? "kaffedrikker" : "kaffedrikkere";
-    lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`));
+    if (s.visMaanedspris) lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`));
     lines.push(priceLine(`Estimatet er lavet ud fra ${fmtAntal(s.drikkere)} ${betegnelse} som drikker 3 kopper i snit pr. arbejdsdag.`));
   }
   if (s.model === "min" && enheder.length === 1 && erBlackbirdMaskine(enheder[0].maskine)) {
