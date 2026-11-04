@@ -432,8 +432,7 @@ function buildEmail(s) {
   const estimeret = s.estimeret !== null && s.estimeret > 0 ? s.estimeret.toLocaleString("da-DK") : "[antal]";
   const aktivtAntal = s.model === "fast" ? s.estimeret : s.kopper;
   const betaling = s.pris && aktivtAntal ? fmtKr(s.pris * aktivtAntal) : "[beløb]";
-  const tillæg = s.visMaanedspris ? `, svarende til ${s.model === "fast" ? "en månedlig betaling" : "en minimumsbetaling"} på ${betaling} kr. pr. måned` : "";
-  const modelLine = `Fast betaling baseret på et estimeret forbrug på ${estimeret} kopper pr. måned${tillæg}.`;
+  const modelLine = "Faktureres ud fra estimeret forbrug";
   const mdr = s.periode !== null && s.periode > 0 ? Math.round(s.periode) : null;
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
 
