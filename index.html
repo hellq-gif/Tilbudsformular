@@ -645,7 +645,11 @@ function opdaterMaelkvalg(maskine) {
 let tidligereBetalingsvalg = $("model").value;
 let ikkeBlackbirdBetalingAktiv = false;
 function opdaterBetalingsvalg(maskine) {
-  const ikkeBlackbird = Boolean(maskine) && !erBlackbirdMaskine(maskine);
+  const ikkeBlackbird = maskiner.length > 1 || (Boolean(maskine) && !erBlackbirdMaskine(maskine));
+  const opt = $("model").querySelector('option[value="fast"]');
+  opt.textContent = maskiner.length > 1 ? "Flere maskiner (min. estimeret forbrug)"
+    : maskine && !erBlackbirdMaskine(maskine) ? "Øvrige maskiner (min. estimeret forbrug)"
+    : "Videresalg (min. estimeret forbrug)";
   const menu = $("model");
   const forbrugsbaseret = menu.querySelector('option[value="min"]');
   if (ikkeBlackbird) {
@@ -660,13 +664,123 @@ function opdaterBetalingsvalg(maskine) {
   }
   ikkeBlackbirdBetalingAktiv = ikkeBlackbird;
 }
+// Alle maskiner gemmes separat, mens editoren viser den valgte maskines felter.
+function gemAktivMaskine() {
+  if (!maskiner[aktivMaskine]) return;
+  Object.assign(maskiner[aktivMaskine], {
+    maskine: $("maskine").value,
+    vand: $("vand").value,
+    maelk: $("maelk").value,
+    kortbetaling: $("maskine").value === "jura" && $("kortbetaling").value === "ja",
+    mahlkonig: $("mahlkonig").checked,
+    puqpress: $("puqpress").checked
+  });
+}
+function indlæsMaskine(cfg) {
+  $("maskine").value = cfg.maskine;
+  // Genopbyg den komplette liste inden den almindelige modelvalidering køres.
+  aktivVandGruppe = null;
+  tidligereVandvalg = cfg.vand || "";
+  $("vand").replaceChildren(...almindeligeVandvalg.map(option => option.cloneNode(true)));
+  $("vand").disabled = false;
+  $("vand").value = cfg.vand || "";
+  simonelliMaelkAktivt = false;
+  tidligereMaelkValg = cfg.maelk || "friskmaelk";
+  $("maelk").disabled = false;
+  $("maelk").value = cfg.maelk || "friskmaelk";
+  $("kortbetaling").value = cfg.kortbetaling ? "ja" : "nej";
+  $("mahlkonig").checked = Boolean(cfg.mahlkonig);
+  $("puqpress").checked = Boolean(cfg.puqpress);
+}
+function vælgMaskine(index) {
+  if (index === aktivMaskine || !maskiner[index]) return;
+  gemAktivMaskine();
+  aktivMaskine = index;
+  indlæsMaskine(maskiner[index]);
+  update();
+}
+function tilføjMaskine(dupliker = false) {
+  if (maskiner.length >= 8) return;
+  gemAktivMaskine();
+  const cfg = dupliker ? { ...maskiner[aktivMaskine] } : nyMaskine();
+  maskiner.splice(aktivMaskine + 1, 0, cfg);
+  aktivMaskine += 1;
+  indlæsMaskine(cfg);
+  update();
+}
+function fjernMaskine(index) {
+  if (maskiner.length <= 1 || !maskiner[index]) return;
+  gemAktivMaskine();
+  maskiner.splice(index, 1);
+  if (index === aktivMaskine) {
+    aktivMaskine = Math.min(index, maskiner.length - 1);
+    indlæsMaskine(maskiner[aktivMaskine]);
+  } else if (index < aktivMaskine) {
+    aktivMaskine -= 1;
+  }
+  update();
+}
+function tegnMaskinliste() {
+  const list = $("machine-list");
+  const items = maskiner.map((cfg, i) => {
+    const item = document.createElement("div");
+    item.className = "machine-line" + (i === aktivMaskine ? " active" : "");
+    const selected = document.createElement("button");
+    selected.type = "button";
+    selected.className = "machine-line-select";
+    selected.setAttribute("aria-pressed", String(i === aktivMaskine));
+    selected.title = "Redigér maskine " + (i + 1);
+    const image = document.createElement("img");
+    image.src = IMG[cfg.maskine] || IMG.swan;
+    image.alt = "";
+    const details = document.createElement("span");
+    details.className = "machine-line-detail";
+    const heading = document.createElement("strong");
+    heading.textContent = (i + 1) + ". " + (MACH[cfg.maskine]?.name || "Vælg model");
+    const description = document.createElement("small");
+    const brief = [vandTekst(cfg.vand)];
+    if (!erSemi(cfg.maskine) && cfg.maelk === "friskmaelk") brief.push("Friskmælkskøleskab");
+    if (cfg.maskine === "jura" && cfg.kortbetaling) brief.push("Kortbetaling");
+    if (erSemi(cfg.maskine) && cfg.mahlkonig) brief.push("Mahlkönig");
+    if (erSemi(cfg.maskine) && cfg.puqpress) brief.push("Puqpress");
+    description.textContent = brief.join(" · ");
+    details.append(heading, description);
+    selected.append(image, details);
+    selected.addEventListener("click", () => vælgMaskine(i));
+    const actions = document.createElement("div");
+    actions.className = "machine-actions";
+    const duplicate = document.createElement("button");
+    duplicate.type = "button";
+    duplicate.textContent = "Duplikér";
+    duplicate.title = "Lav en kopi med samme model og ekstraudstyr";
+    duplicate.disabled = maskiner.length >= 8;
+    duplicate.addEventListener("click", () => { vælgMaskine(i); tilføjMaskine(true); });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Fjern";
+    remove.title = "Fjern maskine " + (i + 1);
+    remove.disabled = maskiner.length === 1;
+    remove.addEventListener("click", () => fjernMaskine(i));
+    actions.append(duplicate, remove);
+    item.append(selected, actions);
+    return item;
+  });
+  list.replaceChildren(...items);
+  $("machine-count").textContent = maskiner.length + " af 8";
+  $("machine-editor-label").textContent = "Indstillinger for maskine " + (aktivMaskine + 1);
+  $("add-machine").disabled = maskiner.length >= 8;
+  $("add-machine").textContent = maskiner.length >= 8 ? "Maksimum 8 maskiner" : "+ Tilføj maskine";
+}
+
 function update() {
   opdaterVandvalg($("maskine").value);
   opdaterMaelkvalg($("maskine").value);
-  opdaterBetalingsvalg($("maskine").value);
   // Jura-tilvalget skal ikke følge med, hvis sælgeren skifter til en anden maskine.
   if ($("maskine").value !== "jura") $("kortbetaling").value = "nej";
+  gemAktivMaskine();
+  opdaterBetalingsvalg($("maskine").value);
   const s = read();
+  tegnMaskinliste();
   $("mail").classList.toggle("mail-missing", !s.mail);
   const a = s.type === "aftale";
   $("sek-maskine").hidden = a;
@@ -747,6 +861,7 @@ document.querySelectorAll(".machine-card").forEach((card) => {
   card.addEventListener("click", () => { $("maskine").value = card.dataset.machine; update(); });
 });
 document.querySelectorAll("[data-product-img]").forEach((img) => { img.src = IMG[img.dataset.productImg]; });
+$("add-machine").addEventListener("click", () => tilføjMaskine());
 $("form").addEventListener("input", update);
 $("form").addEventListener("change", update);
 $("copy").addEventListener("click", async () => {
@@ -775,12 +890,9 @@ $("reset").addEventListener("click", () => {
   $("drikkere").value = "10";
   $("periode").value = "60";
   $("vis-maanedspris").checked = false;
-  $("maskine").value = "swan";
-  $("vand").value = "";
-  $("maelk").value = "friskmaelk";
-  $("kortbetaling").value = "nej";
-  tidligereMaelkValg = "friskmaelk";
-  tidligereVandvalg = "";
+  maskiner.splice(0, maskiner.length, nyMaskine());
+  aktivMaskine = 0;
+  indlæsMaskine(maskiner[0]);
   $("kakao").checked = false;
   $("maelkepulver").checked = false;
   $("mahlkonig").checked = false;
@@ -796,6 +908,7 @@ $("reset").addEventListener("click", () => {
   KAFFE.forEach((k) => { $(k.id).checked = false; });
   $("model").value = "min";
   tidligereBetalingsvalg = "min";
+  ikkeBlackbirdBetalingAktiv = false;
   $("kopper").value = "100";
   update();
   $("firma").focus();
