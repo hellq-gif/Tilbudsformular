@@ -43,7 +43,11 @@ body {
 header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .header-actions label { font-size:12px; white-space:nowrap; }
-.header-actions select { width:auto; min-width:125px; min-height:44px; }
+.header-actions select { width:100%; min-width:132px; min-height:44px; }
+.language-controls { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.language-field { display:flex; flex-direction:column; gap:5px; min-width:132px; }
+.language-field label { font-size:12px; font-weight:600; color:var(--muted); white-space:nowrap; }
+@media(max-width:560px){.header-actions { width:100%; } .language-controls { flex:1; } .language-field { flex:1 1 130px; }}
 .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .brand img { display: block; height: 36px; width: auto; border-radius: 3px; background: #fff; padding: 2px 4px; }
 h1 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
@@ -155,11 +159,24 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <h1>Tilbudsgenerator</h1>
     </div>
     <div class="header-actions">
-      <label for="sprog">Tilbudssprog</label>
-      <select id="sprog" aria-label="Tilbudssprog / Offer language">
-        <option value="da" selected>Dansk</option>
-        <option value="en">English</option>
-      </select>
+      <div class="language-controls">
+        <div class="language-field">
+          <label for="sprog">Tilbudssprog</label>
+          <select id="sprog" aria-label="Tilbudssprog">
+            <option value="da" selected>Dansk</option>
+            <option value="sv">Svenska</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="language-field">
+          <label for="redigeringssprog">Redigeringssprog</label>
+          <select id="redigeringssprog" aria-label="Redigeringssprog">
+            <option value="da" selected>Dansk</option>
+            <option value="sv">Svenska</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
       <button type="button" class="secondary" id="reset">Ny kunde (ryd felter)</button>
     </div>
   </header>
@@ -312,7 +329,7 @@ const HEADING_FONT = FONT;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const num = (v) => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
-const offerLocale = () => $("sprog").value === "en" ? "en-GB" : "da-DK";
+const offerLocale = () => $("sprog").value === "en" ? "en-GB" : $("sprog").value === "sv" ? "sv-SE" : "da-DK";
 const fmt2 = (n) => n.toLocaleString(offerLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtAntal = (n) => n.toLocaleString(offerLocale(), { maximumFractionDigits: 2 });
 const fmtKr = (n) => (Math.round(n * 100) % 100 === 0 ? Math.round(n).toLocaleString(offerLocale()) : fmt2(n));
@@ -623,7 +640,7 @@ function buildEmail(s) {
     return englishOfferHtml(raw, s)
       .replaceAll(tokens.firma, esc(s.firma || "[Company]"))
       .replaceAll(tokens.navn, esc(s.navn || "[Contact person]"))
-      .replaceAll(tokens.intro, esc(s.intro === DEFAULT_INTRO_DA ? DEFAULT_INTRO_EN : s.intro).replace(/\n/g, "<br>"));
+      .replaceAll(tokens.intro, esc(standardIntro(s.intro, "en")).replace(/\n/g, "<br>"));
   }
 
   const m = MACH[s.maskine];
@@ -739,6 +756,10 @@ ${para("Sig endelig til, hvis der er noget, I ønsker tilpasset.", "32px 40px 0 
 // Kun kundetilbuddet oversættes. Alle sælgerfelter og statusbeskeder er på dansk.
 const DEFAULT_INTRO_DA = "Tak for en god snak. Som lovet kommer her et samlet og overskueligt oplæg på en professionel kaffeløsning fra os 🙂";
 const DEFAULT_INTRO_EN = "Thank you for the great conversation. As promised, here is a clear overview of a professional coffee solution from Blackbird Coffee. 🙂";
+const DEFAULT_INTRO_SV = "Tack för ett trevligt samtal. Som utlovat kommer här ett tydligt och samlat förslag på en professionell kaffelösning från oss. 🙂";
+const DEFAULT_INTROS = { da: DEFAULT_INTRO_DA, sv: DEFAULT_INTRO_SV, en: DEFAULT_INTRO_EN };
+const standardIntro = (value, language) => Object.values(DEFAULT_INTROS).includes(value)
+  ? DEFAULT_INTROS[language] : value;
 
 let statusTimer = null;
 function setStatus(text, kind) {
