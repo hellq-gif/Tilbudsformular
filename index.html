@@ -353,6 +353,25 @@ function udstyrTilMaskine(cfg, maelkepulver = false) {
   udstyr.push(vandTekst(cfg.vand));
   return udstyr;
 }
+// Mål oplyst af Blackbird (H × B × D i mm). Jura har endnu ingen registrerede mål.
+const TEKNISKE_MAAL = {
+  swan: { maskine: [440, 300, 490], koel: [410, 220, 400] },
+  falcon: { maskine: [670, 416, 608], koel: [580, 240, 450] },
+  simonelli1: { maskine: [530, 400, 545] },
+  simonelli2: { maskine: [530, 780, 545] }
+};
+// Tabelbaseret og inline-stylet, så tekniske data også virker i Outlook.
+function tekniskeData(cfg, kompakt = false) {
+  const maal = TEKNISKE_MAAL[cfg.maskine];
+  if (!maal) return "";
+  const rows = [["Maskinens mål", maal.maskine]];
+  if (cfg.maelk === "friskmaelk" && maal.koel) rows.push(["Køleskabets mål", maal.koel]);
+  const items = rows.map(([navn, dimensioner], i) => `<tr><td valign="top" style="padding:${i ? "7px" : "10px"} 10px 3px 0;font-family:${FONT};font-size:13px;line-height:19px;color:#675546;white-space:nowrap;">${navn}</td><td valign="top" style="padding:${i ? "7px" : "10px"} 0 3px 0;font-family:${FONT};font-size:13px;line-height:19px;color:#2B1D14;font-weight:600;">${dimensioner.join(" × ")} mm</td></tr>`).join("");
+  const box = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;"><tr><td style="padding:0 0 5px 0;font-family:${FONT};font-size:${kompakt ? 12 : 14}px;line-height:19px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;color:#6F4529;">Tekniske data</td></tr><tr><td style="font-family:${FONT};font-size:11px;line-height:16px;color:#8B7D70;">Mål (H × B × D)</td></tr><tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr></table>`;
+  return kompakt
+    ? `<div style="border-top:1px solid #E6DED3;margin-top:13px;padding-top:12px;">${box}</div>`
+    : `<tr><td style="padding:18px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8F5F0" style="width:100%;background-color:#F8F5F0;border:1px solid #E6DED3;"><tr><td style="padding:17px 20px;">${box}</td></tr></table></td></tr>`;
+}
 const FORMATER = [
   { id: "fmt-1kg", label: "Hele bønner i 1 kg poser" },
   { id: "fmt-500", label: "Formalet i 500 g poser" },
@@ -502,6 +521,10 @@ const EN_OFFER_STRINGS = [
   ["Vandtank 8L", "8L water tank"],
   ["Kaffemaskiner", "Coffee machines"],
   ["Inkluderet ekstraudstyr", "Included equipment"],
+  ["Tekniske data", "Technical specifications"],
+  ["Mål (H × B × D)", "Dimensions (H × W × D)"],
+  ["Maskinens mål", "Machine dimensions"],
+  ["Køleskabets mål", "Fridge dimensions"],
   ["Øvrige forbrugsvarer", "Other consumables"],
   ["Service og drift", "Service and maintenance"],
   ["Intelligent fjernstyring", "Smart remote management"],
@@ -650,7 +673,8 @@ function buildEmail(s) {
     ? enheder.map((cfg, i) => {
         const mm = MACH[cfg.maskine];
         const tilbehør = udstyrTilMaskine(cfg, s.maelkepulver);
-        return `<tr><td style="padding:18px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-top:1px solid #E6DED3;"><tr><td valign="top" width="110" style="padding:15px 14px 0 0;"><img src="${IMG[cfg.maskine]}" width="100" alt="${esc(mm ? mm.name : "")}" style="display:block;width:100px;height:auto;border:0;"></td><td valign="top" style="padding:16px 0 5px 0;"><div style="font-family:${HEADING_FONT};font-size:19px;line-height:25px;font-weight:700;color:#2B1D14;"><strong>${i + 1}. ${esc(mm ? mm.name : "[Vælg model]")}</strong></div><div style="font-family:${FONT};font-size:12px;line-height:18px;font-weight:700;color:#6F4529;padding-top:9px;">Inkluderet ekstraudstyr</div><div style="font-family:${FONT};font-size:13px;line-height:21px;color:#4A3A2E;">${esc(tilbehør.join(" • "))}</div></td></tr></table></td></tr>`;
+        const teknisk = tekniskeData(cfg, true);
+        return `<tr><td style="padding:18px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-top:1px solid #E6DED3;"><tr><td valign="top" width="110" style="padding:15px 14px 0 0;"><img src="${IMG[cfg.maskine]}" width="100" alt="${esc(mm ? mm.name : "")}" style="display:block;width:100px;height:auto;border:0;"></td><td valign="top" style="padding:16px 0 5px 0;"><div style="font-family:${HEADING_FONT};font-size:19px;line-height:25px;font-weight:700;color:#2B1D14;"><strong>${i + 1}. ${esc(mm ? mm.name : "[Vælg model]")}</strong></div><div style="font-family:${FONT};font-size:12px;line-height:18px;font-weight:700;color:#6F4529;padding-top:9px;">Inkluderet ekstraudstyr</div><div style="font-family:${FONT};font-size:13px;line-height:21px;color:#4A3A2E;">${esc(tilbehør.join(" • "))}</div>${teknisk}</td></tr></table></td></tr>`;
       }).join("")
     : m ? `<tr><td style="padding:24px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:520px;"><tr><td><img src="${IMG[s.maskine]}" width="520" alt="${esc(m.name)}" style="display:block;width:100%;max-width:520px;height:auto;border:0;"></td></tr></table></td></tr>` : "";
   let udloebTxt = "";
@@ -674,6 +698,7 @@ ${remotePara("Hvis I eksempelvis får en ny størrelse kopper, ønsker en stærk
 ${flereMaskiner ? "" : h2("1 × " + esc(m ? m.name : "[Model]"), 32)}
 ${flereMaskiner ? "" : para(["swan", "falcon"].includes(s.maskine) && m ? esc(m.desc).replace(". Maskinen tilbyder", ".<br><br>Maskinen tilbyder") : esc(m ? m.desc : "[Vælg model]"))}
 ${flereMaskiner ? "" : `<tr><td style="padding:18px 40px 0 40px;font-family:${FONT};font-size:16px;line-height:22px;letter-spacing:0.6px;text-transform:uppercase;font-weight:700;color:#6F4529;"><strong style="font-family:${FONT};font-size:16px;line-height:22px;font-weight:700;color:#6F4529;">Inkluderet ekstraudstyr</strong></td></tr>${para(esc(equip.join(" • ")), "4px 40px 0 40px")}`}
+${flereMaskiner ? "" : tekniskeData(enheder[0])}
 ${h2("Kaffen")}
 ${para("Vi friskrister altid vores kaffe i Danmark, i Roskilde – tæt på leveringstidspunktet.")}
 ${para("I kan frit skifte mellem alle vores kaffevarianter fra levering til levering.", "8px 40px 0 40px")}
