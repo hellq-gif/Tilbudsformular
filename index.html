@@ -232,7 +232,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <div class="estimat-box" aria-live="polite">Estimeret forbrug: <strong id="estimat">600 kopper pr. måned</strong><small>1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.</small></div>
           <div class="field"><label for="model">Betaling</label>
             <select id="model"><option value="min" selected>Forbrugsbaseret (min. 100 kopper)</option><option value="fast">Videresalg (min. estimeret forbrug)</option></select></div>
-          <label class="check"><input type="checkbox" id="vis-maanedspris"> Vis månedligt beløb i tilbuddet</label>
+          <label class="check"><input type="checkbox" id="vis-maanedspris"> Vis månedligt beløb og estimeret forbrug</label>
           <div class="betalings-info" role="note" aria-label="Vejledning om minimumsforbrug">
             <strong>OBS: Minimumsforbrug</strong>
             <p>Ved eget forbrug og/eller gratis uddeling samt brug af 1 Blackbird-maskine gælder et minimum på <b>100 kopper pr. måned</b>.</p>
@@ -653,7 +653,7 @@ function buildEmail(s) {
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
 
   const lines = [priceLine(`Prisen inkluderer ${joinOg(incl)}.`)];
-  if (s.drikkere) {
+  if (s.visMaanedspris && s.drikkere) {
     const betegnelse = s.drikkere === 1 ? "kaffedrikker" : "kaffedrikkere";
     lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`));
     lines.push(priceLine(`Estimatet er lavet ud fra ${fmtAntal(s.drikkere)} ${betegnelse} som drikker 3 kopper i snit pr. arbejdsdag.`));
