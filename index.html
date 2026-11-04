@@ -172,7 +172,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <label class="check"><input type="checkbox" id="puqpress"> Puqpress automatisk tamper</label>
         </div>
         <div class="field"><label for="vand">Vandforsyning</label>
-          <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank 2L</option><option value="tank8">Vandtank 8L</option><option value="fast">Fastvandstilslutning med BWT Filter</option></select></div>
+          <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank 2L</option><option value="tank5">Vandtank 5L</option><option value="tank8">Vandtank 8L</option><option value="fast">Fastvandstilslutning med BWT Filter</option></select></div>
         <div class="field"><label for="maelk">Friskmælkskøleskab 4L</label>
           <select id="maelk"><option value="friskmaelk" selected>Ja</option><option value="ingen">Nej</option></select></div>
       </fieldset>
@@ -343,6 +343,7 @@ function missing(s) {
   if (s.maskine && !erBlackbirdMaskine(s.maskine) && s.model === "min") m.push("betalingsform (andre maskiner kræver minimum estimeret forbrug)");
   if (!s.vand) m.push("vandforsyning");
   if (s.maskine === "falcon" && s.vand && !["tank8", "fast"].includes(s.vand)) m.push("vandforsyning (Falcon: kun 8L tank eller fastvand)");
+  if (s.maskine === "jura" && s.vand !== "tank5") m.push("vandforsyning (Jura X10: kun 5L vandtank)");
   if (!s.maelk) m.push("mælk");
   if (s.maskine && s.maskine.startsWith("simonelli") && s.maelk === "friskmaelk") m.push("Friskmælkskøleskab kan ikke vælges til Simonelli");
   if (!s.kaffe.length) m.push("kaffetype");
@@ -406,7 +407,7 @@ function buildEmail(s) {
   const m = MACH[s.maskine];
   const firma = s.firma || "[Virksomhed]";
   const navn = s.navn || "[Kontaktperson]";
-  const vandTxt = s.vand === "tank" ? "Vandtank 2L" : s.vand === "tank8" ? "Vandtank 8L" : s.vand === "fast" ? "Fastvandstilslutning med BWT Filter" : "[Vandforsyning]";
+  const vandTxt = s.vand === "tank" ? "Vandtank 2L" : s.vand === "tank5" ? "Vandtank 5L" : s.vand === "tank8" ? "Vandtank 8L" : s.vand === "fast" ? "Fastvandstilslutning med BWT Filter" : "[Vandforsyning]";
   const equip = [];
   if (s.maskine === "falcon") {
     equip.push("XL Bønnetårne (2 stk.)", "XL Kakaotårn");
@@ -528,32 +529,37 @@ function findWarnings(s) {
     if (!s.mahlkonig) w.push("Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.");
   }
   if (s.maskine === "jura" && s.kakao) w.push("Kontrollér kompatibiliteten mellem Jura X10 og den valgte kakaoløsning.");
-  if (s.maskine === "jura" && s.vand === "tank8") w.push("Kontrollér, at 8 L-vandtanken er kompatibel med Jura X10.");
+  if (s.maskine === "jura" && s.vand !== "tank5") w.push("Jura X10 leveres kun med 5L vandtank.");
   return w;
 }
-// Vandforsyning afhænger af maskinen: Falcon har kun 8L tank eller fastvand;
-// Simonelli kræver fastvand, mens øvrige modeller beholder alle valg.
+// Vandforsyning afhænger af maskinen: Falcon kan bruge 8L tank eller fastvand,
+// Simonelli kræver fastvand, Jura X10 har kun 5L tank, og Swan har 2L/8L/fastvand.
 const almindeligeVandvalg = Array.from($("vand").options, o => o.cloneNode(true));
 let tidligereVandvalg = $("vand").value;
 let aktivVandGruppe = null;
 function opdaterVandvalg(maskine) {
   const gruppe = maskine === "simonelli1" || maskine === "simonelli2" ? "simonelli"
+    : maskine === "jura" ? "jura"
     : maskine === "falcon" ? "falcon" : "øvrige";
   if (gruppe === aktivVandGruppe) return;
   const menu = $("vand");
   const aktueltValg = menu.value;
-  if (aktivVandGruppe !== "simonelli") tidligereVandvalg = aktueltValg;
+  // Husk det sidste valg på en maskine, hvor vandforsyningen ikke er låst.
+  if (aktivVandGruppe !== "simonelli" && aktivVandGruppe !== "jura") tidligereVandvalg = aktueltValg;
 
-  if (gruppe === "simonelli") {
-    const fastvand = almindeligeVandvalg.find(o => o.value === "fast").cloneNode(true);
-    menu.replaceChildren(fastvand);
-    menu.value = "fast";
+  if (gruppe === "simonelli" || gruppe === "jura") {
+    const låstValg = gruppe === "jura" ? "tank5" : "fast";
+    const mulighed = almindeligeVandvalg.find(o => o.value === låstValg).cloneNode(true);
+    menu.replaceChildren(mulighed);
+    menu.value = låstValg;
     menu.disabled = true;
-    menu.title = "Simonelli kan kun tilsluttes fast vand.";
+    menu.title = gruppe === "jura"
+      ? "Jura X10 leveres kun med 5L vandtank."
+      : "Simonelli kan kun tilsluttes fast vand.";
   } else {
     const tilladteValg = gruppe === "falcon" ? ["", "tank8", "fast"] : ["", "tank", "tank8", "fast"];
     menu.replaceChildren(...almindeligeVandvalg.filter(o => tilladteValg.includes(o.value)).map(o => o.cloneNode(true)));
-    const ønsketValg = aktivVandGruppe === "simonelli" ? tidligereVandvalg : aktueltValg;
+    const ønsketValg = aktivVandGruppe === "simonelli" || aktivVandGruppe === "jura" ? tidligereVandvalg : aktueltValg;
     menu.value = tilladteValg.includes(ønsketValg) ? ønsketValg : "";
     menu.disabled = false;
     menu.removeAttribute("title");
