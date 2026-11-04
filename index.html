@@ -468,7 +468,7 @@ function buildEmail(s) {
   if (s.maelkepulver) incl.push("mælkepulver");
   incl.push("kaffe");
   if (s.kakao) incl.push("kakaopulver");
-  if (s.vand === "fast") incl.push("fastvandstilslutning");
+  if (enheder.some(cfg => cfg.vand === "fast")) incl.push("fastvandstilslutning");
   incl.push("installation", "fuld serviceaftale", "reservedele", "ombytning ved behov");
 
   const prisTxt = s.pris ? fmt2(s.pris) : "[Koppris]";
