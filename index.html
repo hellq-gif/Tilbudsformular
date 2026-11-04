@@ -583,6 +583,7 @@ function englishOfferHtml(html, s) {
     .replaceAll("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte.", "Billing is based on estimated consumption, calculated from the number of employees.")
     .replace(/Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ([\d.,]+) kopper pr\. md\. i forbindelse med årsopgørelsen\. Ligesom en varmeregning 🙂/g, (_m,cups) => "If you consume less than estimated, we refund the difference down to the " + cups + "-cup monthly minimum during the annual reconciliation – just like a utility bill. 🙂")
     .replaceAll("Faktureres ud fra estimeret forbrug.", "Invoiced based on estimated consumption.")
+    .replace(/Estimeret månedligt beløb: ([\d.,\[\]a-zA-Z]+) kr\. ekskl\. moms\./g, (_m, amount) => "Estimated monthly amount: " + amount + " DKK excl. VAT.")
     .replace(/Aftaleperiode: ([\d]+) (?:måned|måneder)\./g, (_m, months) => "Agreement term: " + months + " " + (Number(months) === 1 ? "month" : "months") + ".")
     .replace(/Aftaleperiode: \[antal\] måneder\./g, "Agreement term: [number] months.")
     .replace(/Prisen er beregnet ud fra en forventet aftagning på ([\d.,\[\]a-zA-Z]+) kg pr\. måned\./g, (_m, kg) => "The price is based on an expected purchase volume of " + kg + " kg per month.")
@@ -665,7 +666,8 @@ function buildEmail(s) {
     lines.push(priceLine(`Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ${kopper} kopper pr. md. i forbindelse med årsopgørelsen. Ligesom en varmeregning 🙂`, !periodeLine));
   } else {
     // Andre maskiner og videresalg: minimum er hele det estimerede forbrug; ingen årsregulering ned til 100 kopper.
-    lines.push(priceLine(modelLine, !periodeLine));
+    lines.push(priceLine(modelLine, !s.visMaanedspris && !periodeLine));
+    if (s.visMaanedspris) lines.push(priceLine(`Estimeret månedligt beløb: ${betaling} kr. ekskl. moms.`, !periodeLine));
   }
   if (periodeLine) lines.push(priceLine(periodeLine, true));
 
