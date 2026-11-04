@@ -322,6 +322,8 @@ function read() {
   };
 }
 const periodeForKort = (s) => s.periode !== null && s.periode < 12;
+// Forbrugsbaseret afregning med minimum 100 kopper er forbeholdt Blackbirds egne maskiner.
+const erBlackbirdMaskine = (maskine) => maskine === "swan" || maskine === "falcon";
 
 function missing(s) {
   const m = [];
@@ -338,6 +340,7 @@ function missing(s) {
     return m;
   }
   if (!s.maskine) m.push("model");
+  if (s.maskine && !erBlackbirdMaskine(s.maskine) && s.model === "min") m.push("betalingsform (andre maskiner kræver minimum estimeret forbrug)");
   if (!s.vand) m.push("vandforsyning");
   if (s.maskine === "falcon" && s.vand && !["tank8", "fast"].includes(s.vand)) m.push("vandforsyning (Falcon: kun 8L tank eller fastvand)");
   if (!s.maelk) m.push("mælk");
@@ -440,14 +443,14 @@ function buildEmail(s) {
     lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`));
     lines.push(priceLine(`Estimatet er lavet ud fra ${fmtAntal(s.drikkere)} ${betegnelse} som drikker 3 kopper i snit pr. arbejdsdag.`));
   }
-  if (s.model === "fast") {
-    // Ved fast betaling må vi ikke love årsafregning efter faktisk forbrug.
-    lines.push(priceLine(modelLine, !periodeLine));
-  } else {
+  if (s.model === "min" && erBlackbirdMaskine(s.maskine)) {
     const minimumPris = s.visMaanedspris ? ` (${betaling} kr. pr. måned)` : "";
     lines.push(priceLine(`Med vores nye koncept betaler I for jeres faktiske forbrug - dog med en minimumsbetaling svarende til ${kopper} kopper om måneden${minimumPris}.`));
     lines.push(priceLine("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte."));
     lines.push(priceLine(`Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ${kopper} kopper pr. md. i forbindelse med årsopgørelsen. Ligesom en varmeregning 🙂`, !periodeLine));
+  } else {
+    // Andre maskiner og videresalg: minimum er hele det estimerede forbrug; ingen årsregulering ned til 100 kopper.
+    lines.push(priceLine(modelLine, !periodeLine));
   }
   if (periodeLine) lines.push(priceLine(periodeLine, true));
 
@@ -577,9 +580,30 @@ function opdaterMaelkvalg(maskine) {
   }
   simonelliMaelkAktivt = semi;
 }
+// En ikke-Blackbird-maskine kan aldrig sælges med den særlige 100-koppersordning.
+// Sælgerens valgte betalingsmodel gendannes ved skift tilbage til Swan/Falcon.
+let tidligereBetalingsvalg = $("model").value;
+let ikkeBlackbirdBetalingAktiv = false;
+function opdaterBetalingsvalg(maskine) {
+  const ikkeBlackbird = Boolean(maskine) && !erBlackbirdMaskine(maskine);
+  const menu = $("model");
+  const forbrugsbaseret = menu.querySelector('option[value="min"]');
+  if (ikkeBlackbird) {
+    if (!ikkeBlackbirdBetalingAktiv) tidligereBetalingsvalg = menu.value;
+    menu.value = "fast";
+    forbrugsbaseret.disabled = true;
+    menu.title = "Andre maskiner kræver minimum det estimerede forbrug.";
+  } else {
+    forbrugsbaseret.disabled = false;
+    if (ikkeBlackbirdBetalingAktiv) menu.value = tidligereBetalingsvalg;
+    menu.removeAttribute("title");
+  }
+  ikkeBlackbirdBetalingAktiv = ikkeBlackbird;
+}
 function update() {
   opdaterVandvalg($("maskine").value);
   opdaterMaelkvalg($("maskine").value);
+  opdaterBetalingsvalg($("maskine").value);
   const s = read();
   $("mail").classList.toggle("mail-missing", !s.mail);
   const a = s.type === "aftale";
@@ -706,6 +730,7 @@ $("reset").addEventListener("click", () => {
   $("a-maelk").checked = false;
   KAFFE.forEach((k) => { $(k.id).checked = false; });
   $("model").value = "min";
+  tidligereBetalingsvalg = "min";
   $("kopper").value = "100";
   update();
   $("firma").focus();
