@@ -155,12 +155,12 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <legend>Maskine</legend>
         <div class="field"><label for="maskine">Model</label>
           <select id="maskine"><option value="">Vælg model</option>
-            <optgroup label="Fuldautomatiske"><option value="swan">The Swan</option><option value="falcon" selected>The Falcon</option><option value="jura">Jura X10</option></optgroup>
+            <optgroup label="Fuldautomatiske"><option value="swan" selected>The Swan</option><option value="falcon">The Falcon</option><option value="jura">Jura X10</option></optgroup>
             <optgroup label="Semiautomatiske"><option value="simonelli1">Nuova Simonelli Appia Life – 1 gruppe</option><option value="simonelli2">Nuova Simonelli Appia Life – 2 grupper</option></optgroup>
           </select><p class="hint" style="margin-top:4px;">Du kan også vælge direkte på billederne nedenfor.</p></div>
         <div class="machine-gallery" aria-label="Vælg maskine">
-          <button class="machine-card" type="button" data-machine="swan" aria-pressed="false"><span class="machine-card-image"><img data-product-img="swan" alt="The Swan" loading="lazy"></span><span class="machine-card-info"><strong>The Swan</strong><small>Fuldautomatisk</small></span></button>
-          <button class="machine-card" type="button" data-machine="falcon" aria-pressed="true"><span class="machine-card-image"><img data-product-img="falcon" alt="The Falcon" loading="lazy"></span><span class="machine-card-info"><strong>The Falcon</strong><small>Fuldautomatisk</small></span></button>
+          <button class="machine-card" type="button" data-machine="swan" aria-pressed="true"><span class="machine-card-image"><img data-product-img="swan" alt="The Swan" loading="lazy"></span><span class="machine-card-info"><strong>The Swan</strong><small>Fuldautomatisk</small></span></button>
+          <button class="machine-card" type="button" data-machine="falcon" aria-pressed="false"><span class="machine-card-image"><img data-product-img="falcon" alt="The Falcon" loading="lazy"></span><span class="machine-card-info"><strong>The Falcon</strong><small>Fuldautomatisk</small></span></button>
           <button class="machine-card" type="button" data-machine="simonelli1" aria-pressed="false"><span class="machine-card-image"><img data-product-img="simonelli1" alt="Nuova Simonelli 1 gruppe" loading="lazy"></span><span class="machine-card-info"><strong>Simonelli · 1 gruppe</strong><small>Semiautomatisk</small></span></button>
           <button class="machine-card" type="button" data-machine="simonelli2" aria-pressed="false"><span class="machine-card-image"><img data-product-img="simonelli2" alt="Nuova Simonelli 2 grupper" loading="lazy"></span><span class="machine-card-info"><strong>Simonelli · 2 grupper</strong><small>Semiautomatisk</small></span></button>
           <button class="machine-card" type="button" data-machine="jura" aria-pressed="false"><span class="machine-card-image"><img data-product-img="jura" alt="Jura X10" loading="lazy"></span><span class="machine-card-info"><strong>Jura X10</strong><small>Fuldautomatisk</small></span></button>
@@ -711,7 +711,8 @@ $("reset").addEventListener("click", () => {
   $("drikkere").value = "10";
   $("periode").value = "60";
   $("vis-maanedspris").checked = false;
-  ["maskine", "vand"].forEach((id) => { $(id).value = ""; });
+  $("maskine").value = "swan";
+  $("vand").value = "";
   $("maelk").value = "friskmaelk";
   tidligereMaelkValg = "friskmaelk";
   tidligereVandvalg = "";
