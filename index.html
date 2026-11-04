@@ -175,6 +175,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <select id="vand"><option value="" selected>Vælg</option><option value="tank">Vandtank 2L</option><option value="tank5">Vandtank 5L</option><option value="tank8">Vandtank 8L</option><option value="fast">Fastvandstilslutning med BWT Filter</option></select></div>
         <div class="field"><label for="maelk">Friskmælkskøleskab 4L</label>
           <select id="maelk"><option value="friskmaelk" selected>Ja</option><option value="ingen">Nej</option></select></div>
+        <div class="field" id="jura-betalingslosning" hidden><label for="kortbetaling">Betalingsløsning med kort</label>
+          <select id="kortbetaling"><option value="nej" selected>Nej</option><option value="ja">Ja</option></select></div>
       </fieldset>
 
       <fieldset>
@@ -313,7 +315,7 @@ function read() {
     kaffe: KAFFE.filter((k) => $(k.id).checked).map((k) => k.name),
     firma: $("firma").value.trim(), navn: $("navn").value.trim(), maskine: $("maskine").value,
     mahlkonig: $("mahlkonig").checked, puqpress: $("puqpress").checked,
-    vand: $("vand").value, maelk: $("maelk").value, maelkepulver: $("maelkepulver").checked, kakao: $("kakao").checked,
+    vand: $("vand").value, maelk: $("maelk").value, kortbetaling: $("kortbetaling").value === "ja", maelkepulver: $("maelkepulver").checked, kakao: $("kakao").checked,
     pris: num($("pris").value), drikkere: num($("drikkere").value), model: $("model").value,
     estimeret: num($("drikkere").value) === null ? null : Math.round(num($("drikkere").value) * 60),
     visMaanedspris: $("vis-maanedspris").checked,
@@ -415,6 +417,7 @@ function buildEmail(s) {
   }
   const semi = Boolean(s.maskine && s.maskine.startsWith("simonelli"));
   if (!semi && s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab 4L");
+  if (s.maskine === "jura" && s.kortbetaling) equip.push("Betalingsløsning med kort");
   if (semi && s.mahlkonig) equip.push("Mahlkönig espressokværn");
   if (semi && s.puqpress) equip.push("Puqpress automatisk tamper");
   equip.push(vandTxt);
@@ -610,10 +613,13 @@ function update() {
   opdaterVandvalg($("maskine").value);
   opdaterMaelkvalg($("maskine").value);
   opdaterBetalingsvalg($("maskine").value);
+  // Jura-tilvalget skal ikke følge med, hvis sælgeren skifter til en anden maskine.
+  if ($("maskine").value !== "jura") $("kortbetaling").value = "nej";
   const s = read();
   $("mail").classList.toggle("mail-missing", !s.mail);
   const a = s.type === "aftale";
   $("sek-maskine").hidden = a;
+  $("jura-betalingslosning").hidden = a || s.maskine !== "jura";
   $("maskine-pris").hidden = a;
   $("aftale-pris").hidden = !a;
   $("periode").disabled = s.ingenper;
@@ -721,6 +727,7 @@ $("reset").addEventListener("click", () => {
   $("maskine").value = "swan";
   $("vand").value = "";
   $("maelk").value = "friskmaelk";
+  $("kortbetaling").value = "nej";
   tidligereMaelkValg = "friskmaelk";
   tidligereVandvalg = "";
   $("kakao").checked = false;
