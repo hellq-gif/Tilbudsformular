@@ -118,6 +118,24 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .machine-note { padding:9px 11px; border-radius:7px; border:1px solid var(--line); font-size:12px; color:var(--muted); background:var(--surface); }
 .machine-note:empty { display:none; }
 #semi-accessories { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px; gap:9px; }
+/* Overskuelig maskinliste: samme felter redigeres enkeltvis under listen. */
+.machine-list-header { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.machine-list-header strong { font-size:14px; }
+.machine-list-header small { display:block; color:var(--muted); font-size:12px; font-weight:400; }
+.machine-list { display:flex; flex-direction:column; gap:8px; }
+.machine-line { display:flex; gap:9px; align-items:center; padding:9px; background:var(--surface); border:1px solid var(--line); border-radius:9px; min-width:0; }
+.machine-line.active { border-color:#B66A35; box-shadow:0 0 0 1px rgba(182,106,53,.18); }
+.machine-line-select { flex:1; display:flex; align-items:center; gap:9px; min-width:0; min-height:50px; border:0; background:transparent; color:var(--ink); text-align:left; padding:0; cursor:pointer; }
+.machine-line-select img { display:block; width:46px; height:46px; object-fit:contain; border-radius:5px; background:#fff; flex-shrink:0; }
+.machine-line-detail { flex:1; min-width:0; }
+.machine-line-detail strong { display:block; font-size:13px; line-height:18px; }
+.machine-line-detail small { display:block; font-size:11px; color:var(--muted); line-height:16px; }
+.machine-actions { display:flex; flex-wrap:wrap; gap:5px; justify-content:flex-end; }
+.machine-actions button { border:1px solid var(--line); background:transparent; color:var(--ink); padding:5px 8px; min-height:32px; font-size:11px; border-radius:6px; }
+.machine-actions button:disabled { opacity:.35; }
+.machine-add { width:100%; border:1px dashed var(--line); background:transparent; color:var(--ink); font-size:13px; }
+.machine-editor-label { font-size:12px; font-weight:700; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:5px; }
+@media(max-width:420px) { .machine-line { flex-wrap:wrap; } .machine-actions { width:100%; justify-content:flex-end; } }
 /* Fastvand er et låst, men fortsat læsbart valg på Simonelli-modeller. */
 #vand:disabled { background:#332e29; color:#c9bdb3; -webkit-text-fill-color:#c9bdb3; border-color:#53483e; opacity:.7; cursor:not-allowed; }
 #mail.mail-missing { border-color:#E7BD75; box-shadow:0 0 0 1px rgba(231,189,117,.22); }
@@ -152,7 +170,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       </fieldset>
 
       <fieldset id="sek-maskine">
-        <legend>Maskine</legend>
+        <legend>Maskiner</legend>
+        <div class="machine-list-header"><div><strong>Valgte maskiner</strong><small>Indstil hver maskine separat – højst 8 stk.</small></div><span class="hint" id="machine-count" aria-live="polite">1 af 8</span></div>
+        <div id="machine-list" class="machine-list" aria-label="Valgte maskiner"></div>
+        <button type="button" class="machine-add" id="add-machine">+ Tilføj maskine</button>
+        <div class="machine-editor-label" id="machine-editor-label">Indstillinger for maskine 1</div>
         <div class="field"><label for="maskine">Model</label>
           <select id="maskine"><option value="">Vælg model</option>
             <optgroup label="Fuldautomatiske"><option value="swan" selected>The Swan</option><option value="falcon">The Falcon</option><option value="jura">Jura X10</option></optgroup>
@@ -301,6 +323,25 @@ const beanRow = (name) => {
   const [r, f, sy] = k.scores;
   return `<tr><td style="padding:16px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="110" valign="top" style="padding:8px 0;"><img src="${IMG[k.img]}" width="94" alt="${esc(k.name)}" style="display:block;border:0;width:94px;height:auto;"></td><td valign="top" style="padding:4px 0 0 20px;"><div style="font-family:${HEADING_FONT};font-size:20px;line-height:27px;font-weight:700;color:#2B1D14;padding-bottom:6px;"><strong style="font-family:${HEADING_FONT};font-size:20px;line-height:27px;font-weight:700;">${esc(k.name)}</strong></div><div style="font-family:${FONT};font-size:14px;line-height:21px;color:#4A3A2E;">${esc(k.desc)}</div><div style="font-family:${FONT};font-size:12px;line-height:18px;color:#6B5A4A;padding-top:8px;">Ristning ${r}/5 · Fylde ${f}/5 · Syre ${sy}/5</div></td></tr></table></td></tr>`;
 };
+// Konfiguration pr. fysisk kaffemaskine. Den synlige editor redigerer kun den aktive.
+const nyMaskine = () => ({ maskine:"swan", vand:"", maelk:"friskmaelk", kortbetaling:false, mahlkonig:false, puqpress:false });
+const maskiner = [nyMaskine()];
+let aktivMaskine = 0;
+const vandTekst = (v) => v === "tank" ? "Vandtank 2L" : v === "tank5" ? "Vandtank 5L" : v === "tank8" ? "Vandtank 8L" : v === "fast" ? "Fastvandstilslutning med BWT Filter" : "Vandforsyning mangler";
+const erSemi = (model) => Boolean(model && model.startsWith("simonelli"));
+function udstyrTilMaskine(cfg, maelkepulver = false) {
+  const udstyr = [];
+  if (cfg.maskine === "falcon") {
+    udstyr.push("XL Bønnetårne (2 stk.)", "XL Kakaotårn");
+    if (maelkepulver) udstyr.push("XL Mælkepulvertårn");
+  }
+  if (!erSemi(cfg.maskine) && cfg.maelk === "friskmaelk") udstyr.push("Friskmælkskøleskab 4L");
+  if (cfg.maskine === "jura" && cfg.kortbetaling) udstyr.push("Betalingsløsning med kort");
+  if (erSemi(cfg.maskine) && cfg.mahlkonig) udstyr.push("Mahlkönig espressokværn");
+  if (erSemi(cfg.maskine) && cfg.puqpress) udstyr.push("Puqpress automatisk tamper");
+  udstyr.push(vandTekst(cfg.vand));
+  return udstyr;
+}
 const FORMATER = [
   { id: "fmt-1kg", label: "Hele bønner i 1 kg poser" },
   { id: "fmt-500", label: "Formalet i 500 g poser" },
@@ -314,6 +355,7 @@ function read() {
     formater: FORMATER.filter((f) => $(f.id).checked).map((f) => f.id),
     kaffe: KAFFE.filter((k) => $(k.id).checked).map((k) => k.name),
     firma: $("firma").value.trim(), navn: $("navn").value.trim(), maskine: $("maskine").value,
+    maskiner: maskiner.map(cfg => ({ ...cfg })),
     mahlkonig: $("mahlkonig").checked, puqpress: $("puqpress").checked,
     vand: $("vand").value, maelk: $("maelk").value, kortbetaling: $("kortbetaling").value === "ja", maelkepulver: $("maelkepulver").checked, kakao: $("kakao").checked,
     pris: num($("pris").value), drikkere: num($("drikkere").value), model: $("model").value,
@@ -341,13 +383,18 @@ function missing(s) {
     if (!s.mail) m.push("sælgers mailadresse");
     return m;
   }
-  if (!s.maskine) m.push("model");
-  if (s.maskine && !erBlackbirdMaskine(s.maskine) && s.model === "min") m.push("betalingsform (andre maskiner kræver minimum estimeret forbrug)");
-  if (!s.vand) m.push("vandforsyning");
-  if (s.maskine === "falcon" && s.vand && !["tank8", "fast"].includes(s.vand)) m.push("vandforsyning (Falcon: kun 8L tank eller fastvand)");
-  if (s.maskine === "jura" && s.vand !== "tank5") m.push("vandforsyning (Jura X10: kun 5L vandtank)");
-  if (!s.maelk) m.push("mælk");
-  if (s.maskine && s.maskine.startsWith("simonelli") && s.maelk === "friskmaelk") m.push("Friskmælkskøleskab kan ikke vælges til Simonelli");
+  if (s.maskiner.length < 1 || s.maskiner.length > 8) m.push("antal maskiner (1–8)");
+  for (const [i, cfg] of s.maskiner.entries()) {
+    const navn = "maskine " + (i + 1);
+    if (!MACH[cfg.maskine]) m.push(navn + ": model");
+    if (!cfg.vand) m.push(navn + ": vandforsyning");
+    if (cfg.maskine === "falcon" && !["tank8","fast"].includes(cfg.vand)) m.push(navn + ": Falcon kræver 8L tank eller fastvand");
+    if (cfg.maskine === "jura" && cfg.vand !== "tank5") m.push(navn + ": Jura X10 kræver 5L tank");
+    if (erSemi(cfg.maskine) && cfg.vand !== "fast") m.push(navn + ": Simonelli kræver fastvand");
+    if (erSemi(cfg.maskine) && cfg.maelk === "friskmaelk") m.push(navn + ": Simonelli kan ikke have friskmælkskøleskab");
+    if (!cfg.maelk) m.push(navn + ": mælk");
+  }
+  if ((s.maskiner.length !== 1 || !erBlackbirdMaskine(s.maskiner[0].maskine)) && s.model === "min") m.push("betaling (minimum estimeret forbrug ved flere eller andre maskiner)");
   if (!s.kaffe.length) m.push("kaffetype");
   if (s.pris === null || s.pris <= 0) m.push("koppris");
   if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
@@ -409,22 +456,15 @@ function buildEmail(s) {
   const m = MACH[s.maskine];
   const firma = s.firma || "[Virksomhed]";
   const navn = s.navn || "[Kontaktperson]";
-  const vandTxt = s.vand === "tank" ? "Vandtank 2L" : s.vand === "tank5" ? "Vandtank 5L" : s.vand === "tank8" ? "Vandtank 8L" : s.vand === "fast" ? "Fastvandstilslutning med BWT Filter" : "[Vandforsyning]";
-  const equip = [];
-  if (s.maskine === "falcon") {
-    equip.push("XL Bønnetårne (2 stk.)", "XL Kakaotårn");
-    if (s.maelkepulver) equip.push("XL Mælkepulvertårn");
-  }
-  const semi = Boolean(s.maskine && s.maskine.startsWith("simonelli"));
-  if (!semi && s.maelk === "friskmaelk") equip.push("Friskmælkskøleskab 4L");
-  if (s.maskine === "jura" && s.kortbetaling) equip.push("Betalingsløsning med kort");
-  if (semi && s.mahlkonig) equip.push("Mahlkönig espressokværn");
-  if (semi && s.puqpress) equip.push("Puqpress automatisk tamper");
-  equip.push(vandTxt);
+  const enheder = s.maskiner;
+  const flereMaskiner = enheder.length > 1;
+  const semi = erSemi(s.maskine);
+  const equip = udstyrTilMaskine(enheder[0], s.maelkepulver);
   const incl = ["maskinleje"];
-  if (semi && s.mahlkonig) incl.push("Mahlkönig espressokværn");
-  if (semi && s.puqpress) incl.push("Puqpress automatisk tamper");
-  if (!semi && s.maelk === "friskmaelk") incl.push("køleskab");
+  if (enheder.some(cfg => erSemi(cfg.maskine) && cfg.mahlkonig)) incl.push("Mahlkönig espressokværn");
+  if (enheder.some(cfg => erSemi(cfg.maskine) && cfg.puqpress)) incl.push("Puqpress automatisk tamper");
+  if (enheder.some(cfg => !erSemi(cfg.maskine) && cfg.maelk === "friskmaelk")) incl.push("køleskab");
+  if (enheder.some(cfg => cfg.maskine === "jura" && cfg.kortbetaling)) incl.push("kortbetalingsløsning");
   if (s.maelkepulver) incl.push("mælkepulver");
   incl.push("kaffe");
   if (s.kakao) incl.push("kakaopulver");
@@ -446,7 +486,7 @@ function buildEmail(s) {
     lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`));
     lines.push(priceLine(`Estimatet er lavet ud fra ${fmtAntal(s.drikkere)} ${betegnelse} som drikker 3 kopper i snit pr. arbejdsdag.`));
   }
-  if (s.model === "min" && erBlackbirdMaskine(s.maskine)) {
+  if (s.model === "min" && enheder.length === 1 && erBlackbirdMaskine(enheder[0].maskine)) {
     const minimumPris = s.visMaanedspris ? ` (${betaling} kr. pr. måned)` : "";
     lines.push(priceLine(`Med vores nye koncept betaler I for jeres faktiske forbrug - dog med en minimumsbetaling svarende til ${kopper} kopper om måneden${minimumPris}.`));
     lines.push(priceLine("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte."));
@@ -457,7 +497,13 @@ function buildEmail(s) {
   }
   if (periodeLine) lines.push(priceLine(periodeLine, true));
 
-  const machineRow = m ? `<tr><td style="padding:24px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:520px;"><tr><td><img src="${IMG[s.maskine]}" width="520" alt="${esc(m.name)}" style="display:block;width:100%;max-width:520px;height:auto;border:0;"></td></tr></table></td></tr>` : "";
+  const machineRow = flereMaskiner
+    ? enheder.map((cfg, i) => {
+        const mm = MACH[cfg.maskine];
+        const tilbehør = udstyrTilMaskine(cfg, s.maelkepulver);
+        return `<tr><td style="padding:18px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-top:1px solid #E6DED3;"><tr><td valign="top" width="110" style="padding:15px 14px 0 0;"><img src="${IMG[cfg.maskine]}" width="100" alt="${esc(mm ? mm.name : "")}" style="display:block;width:100px;height:auto;border:0;"></td><td valign="top" style="padding:16px 0 5px 0;"><div style="font-family:${HEADING_FONT};font-size:19px;line-height:25px;font-weight:700;color:#2B1D14;"><strong>${i + 1}. ${esc(mm ? mm.name : "[Vælg model]")}</strong></div><div style="font-family:${FONT};font-size:12px;line-height:18px;font-weight:700;color:#6F4529;padding-top:9px;">Inkluderet ekstraudstyr</div><div style="font-family:${FONT};font-size:13px;line-height:21px;color:#4A3A2E;">${esc(tilbehør.join(" • "))}</div></td></tr></table></td></tr>`;
+      }).join("")
+    : m ? `<tr><td style="padding:24px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:520px;"><tr><td><img src="${IMG[s.maskine]}" width="520" alt="${esc(m.name)}" style="display:block;width:100%;max-width:520px;height:auto;border:0;"></td></tr></table></td></tr>` : "";
   let udloebTxt = "";
   if (s.udloeb) {
     const d = new Date(s.udloeb + "T00:00:00");
@@ -465,18 +511,20 @@ function buildEmail(s) {
   }
   const mailto = "mailto:" + esc(s.mail || "") + "?subject=Svar%20p%C3%A5%20tilbud";
 
-  const remoteSection = semi
+  const remoteSection = flereMaskiner
+    ? `${enheder.some(cfg => erSemi(cfg.maskine)) ? `${h2("Baristaoplevelse med semiautomatisk maskine")}${para("På de semiautomatiske maskiner tilberedes espresso og mælkeskum manuelt med portafilter og steamarm.")}` : ""}
+${enheder.some(cfg => !erSemi(cfg.maskine)) ? `${h2("Intelligent fjernstyring")}${remotePara("De fuldautomatiske maskiner kan efter behov tilpasses med hjælp fra vores serviceafdeling.", true)}` : ""}`
+    : semi
     ? `${h2("Baristaoplevelse med semiautomatisk maskine")}
 ${para("Espresso og mælkeskum tilberedes manuelt med portafilter og steamarm. Løsningen er til jer, der ønsker en autentisk baristaoplevelse, og hvor personalet betjener maskinen.")}`
     : `${h2("Intelligent fjernstyring")}
 ${remotePara("Maskinen registrerer løbende forbrug og lagerstatus, så kaffeleverancerne automatisk bliver tilpasset efter behov. På den måde undgår I både at løbe tør og at have unødigt meget kaffe på lager.")}
 ${remotePara("Maskinen kan desuden fjernstyres af vores serviceafdeling.")}
 ${remotePara("Hvis I eksempelvis får en ny størrelse kopper, ønsker en stærkere Americano eller vil have temperaturen justeret, kan vi klare det over telefonen inden for få minutter – uden behov for et teknikerbesøg.", true)}`;
-  const mainMaskine = `${machineRow}
-${h2("1 × " + esc(m ? m.name : "[Model]"), 32)}
-${para(["swan", "falcon"].includes(s.maskine) && m ? esc(m.desc).replace(". Maskinen tilbyder", ".<br><br>Maskinen tilbyder") : esc(m ? m.desc : "[Vælg model]"))}
-<tr><td style="padding:18px 40px 0 40px;font-family:${FONT};font-size:16px;line-height:22px;letter-spacing:0.6px;text-transform:uppercase;font-weight:700;color:#6F4529;"><strong style="font-family:${FONT};font-size:16px;line-height:22px;font-weight:700;">Inkluderet ekstraudstyr</strong></td></tr>
-${para(esc(equip.join(" • ")), "4px 40px 0 40px")}
+  const mainMaskine = `${flereMaskiner ? h2(enheder.length + " × Kaffemaskiner", 32) : ""}${machineRow}
+${flereMaskiner ? "" : h2("1 × " + esc(m ? m.name : "[Model]"), 32)}
+${flereMaskiner ? "" : para(["swan", "falcon"].includes(s.maskine) && m ? esc(m.desc).replace(". Maskinen tilbyder", ".<br><br>Maskinen tilbyder") : esc(m ? m.desc : "[Vælg model]"))}
+${flereMaskiner ? "" : `<tr><td style="padding:18px 40px 0 40px;font-family:${FONT};font-size:16px;line-height:22px;letter-spacing:0.6px;text-transform:uppercase;font-weight:700;color:#6F4529;"><strong style="font-family:${FONT};font-size:16px;line-height:22px;font-weight:700;color:#6F4529;">Inkluderet ekstraudstyr</strong></td></tr>${para(esc(equip.join(" • ")), "4px 40px 0 40px")}`}
 ${h2("Kaffen")}
 ${para("Vi friskrister altid vores kaffe i Danmark, i Roskilde – tæt på leveringstidspunktet.")}
 ${para("I kan frit skifte mellem alle vores kaffevarianter fra levering til levering.", "8px 40px 0 40px")}
@@ -526,14 +574,17 @@ function findWarnings(s) {
   if (s.estimeret !== null && s.estimeret > 0 && s.estimeret < 100) w.push("Det estimerede forbrug er under 100 kopper pr. måned. Kontrollér behovet.");
   if (s.model === "min" && s.kopper !== null && s.kopper > 0 && s.kopper < 100) w.push("Minimumsforbruget er under 100 kopper pr. måned – kontrollér, at det er godkendt.");
   if (s.model === "min" && s.estimeret !== null && s.kopper !== null && s.kopper > s.estimeret) w.push("Minimumsforbruget er højere end det estimerede forbrug.");
-  if (s.maskine.startsWith("simonelli")) {
-    if (s.vand !== "fast") w.push("Simonelli Appia Life kræver normalt fast vandtilslutning. Kontrollér vandforsyningen.");
-    if (s.maelkepulver) w.push("Mælkepulver er en forbrugsvare og ikke en integreret funktion i en Simonelli.");
-    if (s.kakao) w.push("Kakao er ikke en integreret automatisk funktion på Simonelli. Kontrollér opsætningen.");
-    if (!s.mahlkonig) w.push("Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.");
+  for (const [i, cfg] of s.maskiner.entries()) {
+    const prefix = "Maskine " + (i + 1) + ": ";
+    if (erSemi(cfg.maskine)) {
+      if (cfg.vand !== "fast") w.push(prefix + "Simonelli kræver fast vandtilslutning.");
+      if (s.maelkepulver) w.push(prefix + "Mælkepulver er ikke en integreret funktion i Simonelli.");
+      if (s.kakao) w.push(prefix + "Kakao er ikke en integreret funktion i Simonelli.");
+      if (!cfg.mahlkonig) w.push(prefix + "Kværn er ikke valgt. Kontrollér, om kunden har en kompatibel espressokværn.");
+    }
+    if (cfg.maskine === "jura" && s.kakao) w.push(prefix + "Kontrollér kompatibiliteten med kakaoløsningen.");
+    if (cfg.maskine === "jura" && cfg.vand !== "tank5") w.push(prefix + "Jura X10 leveres kun med 5L vandtank.");
   }
-  if (s.maskine === "jura" && s.kakao) w.push("Kontrollér kompatibiliteten mellem Jura X10 og den valgte kakaoløsning.");
-  if (s.maskine === "jura" && s.vand !== "tank5") w.push("Jura X10 leveres kun med 5L vandtank.");
   return w;
 }
 // Vandforsyning afhænger af maskinen: Falcon kan bruge 8L tank eller fastvand,
