@@ -249,7 +249,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <legend>Pris og aftale</legend>
         <div id="maskine-pris" class="blok">
           <div class="row">
-            <div class="field"><label for="pris">Koppris <small>(kr.)</small></label><input type="text" id="pris" inputmode="decimal" value="3,50" autocomplete="off"></div>
+            <div class="field" id="koppris-field"><label for="pris">Koppris <small>(kr.)</small></label><input type="text" id="pris" inputmode="decimal" value="3,50" autocomplete="off"></div>
+            <div class="field" id="kgpris-videresalg-field" hidden><label for="videresalg-kgpris">Pris pr. kg <small>(kr.)</small></label><input type="text" id="videresalg-kgpris" inputmode="decimal" placeholder="fx 150,00" autocomplete="off"></div>
             <div class="field" id="drikkere-field"><label for="drikkere">Kaffedrikkere <small>(2 decimaler muligt)</small></label><input type="text" id="drikkere" inputmode="numeric" value="10" autocomplete="off" placeholder="fx 6,66"></div>
           </div>
           <div class="estimat-box" id="drikkere-estimat" aria-live="polite">Estimeret forbrug: <strong id="estimat">600 kopper pr. måned</strong><small>1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.</small></div>
@@ -257,10 +258,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
             <div class="field"><label for="videresalg-visning">Vis forbrug i tilbuddet</label>
               <select id="videresalg-visning"><option value="kopper" selected>Antal kopper</option><option value="kg">Antal kg</option><option value="begge">Både kopper og kg</option></select></div>
             <div class="row">
-              <div class="field"><label for="videresalg-kopper">Estimeret antal kopper pr. måned <small>(bruges til koppris)</small></label><input type="text" id="videresalg-kopper" inputmode="numeric" value="600" autocomplete="off"></div>
+              <div class="field" id="videresalg-kopper-field"><label for="videresalg-kopper">Estimeret antal kopper pr. måned <small>(bruges til koppris)</small></label><input type="text" id="videresalg-kopper" inputmode="numeric" value="600" autocomplete="off"></div>
               <div class="field" id="videresalg-kg-field" hidden><label for="videresalg-kg">Estimeret antal kg pr. måned</label><input type="text" id="videresalg-kg" inputmode="decimal" placeholder="fx 5,5" autocomplete="off"></div>
             </div>
-            <p class="hint">Kg angives særskilt og omregnes ikke automatisk til kopper. Antal kopper bruges til prisberegning og minimumsbetaling.</p>
+            <p class="hint">Kopper og kg har hver sin pris og sit forbrugsestimat. Der omregnes ikke automatisk mellem enhederne.</p>
           </div>
           <div class="field"><label for="model">Betaling</label>
             <select id="model"><option value="min" selected>Forbrugsbaseret (min. 100 kopper)</option><option value="fast">Videresalg (min. estimeret forbrug)</option></select></div>
@@ -268,7 +269,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <div class="betalings-info" role="note" aria-label="Vejledning om minimumsforbrug">
             <strong>OBS: Minimumsforbrug</strong>
             <p>Ved eget forbrug og/eller gratis uddeling samt brug af 1 Blackbird-maskine gælder et minimum på <b>100 kopper pr. måned</b>.</p>
-            <p>Ved videresalg, brug af mere end 1 maskine eller brug af en ikke-Blackbird-maskine gælder et minimum svarende til <b>det estimerede forbrug i antal kopper</b>.</p>
+            <p>Ved videresalg, brug af mere end 1 maskine eller brug af en ikke-Blackbird-maskine gælder et minimum svarende til <b>det estimerede forbrug i den valgte afregningsenhed (kopper eller kg)</b>.</p>
           </div>
           <div class="field" id="minimum-kopper"><label for="kopper">Minimumskopper pr. måned</label><input type="text" id="kopper" inputmode="numeric" value="100" autocomplete="off"></div>
         </div>
@@ -424,10 +425,12 @@ function read() {
     mahlkonig: $("mahlkonig").checked, puqpress: $("puqpress").checked,
     vand: $("vand").value, maelk: $("maelk").value, kortbetaling: $("kortbetaling").value === "ja", maelkepulver: $("maelkepulver").checked, kakao: $("kakao").checked,
     pris: num($("pris").value), drikkere: num($("drikkere").value), model: $("model").value,
+    videresalgKgpris: num($("videresalg-kgpris").value),
     videresalgVisning: $("videresalg-visning").value,
     videresalgKopper: num($("videresalg-kopper").value),
     videresalgKg: num($("videresalg-kg").value),
-    estimeret: $("model").value === "fast" ? num($("videresalg-kopper").value)
+    estimeret: $("model").value === "fast"
+      ? $("videresalg-visning").value === "kg" ? null : num($("videresalg-kopper").value)
       : num($("drikkere").value) === null ? null : Math.round(num($("drikkere").value) * 60),
     visMaanedspris: $("vis-maanedspris").checked,
     kopper: num($("kopper").value), periode: num($("periode").value), ingenper: !$("visper").checked,
@@ -465,11 +468,19 @@ function missing(s) {
   }
   if ((s.maskiner.length !== 1 || !erBlackbirdMaskine(s.maskiner[0].maskine)) && s.model === "min") m.push("betaling (minimum estimeret forbrug ved flere eller andre maskiner)");
   if (!s.kaffe.length) m.push("kaffetype");
-  if (s.pris === null || s.pris <= 0) m.push("koppris");
   if (s.model === "fast") {
-    if (s.videresalgKopper === null || s.videresalgKopper <= 0 || !Number.isInteger(s.videresalgKopper)) m.push("estimeret antal kopper pr. måned (hele kopper)");
-    if (s.videresalgVisning !== "kopper" && (s.videresalgKg === null || s.videresalgKg <= 0)) m.push("estimeret antal kg pr. måned");
-  } else if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
+    if (s.videresalgVisning !== "kg") {
+      if (s.pris === null || s.pris <= 0) m.push("koppris");
+      if (s.videresalgKopper === null || s.videresalgKopper <= 0 || !Number.isInteger(s.videresalgKopper)) m.push("estimeret antal kopper pr. måned (hele kopper)");
+    }
+    if (s.videresalgVisning !== "kopper") {
+      if (s.videresalgKgpris === null || s.videresalgKgpris <= 0) m.push("pris pr. kg");
+      if (s.videresalgKg === null || s.videresalgKg <= 0) m.push("estimeret antal kg pr. måned");
+    }
+  } else {
+    if (s.pris === null || s.pris <= 0) m.push("koppris");
+    if (s.drikkere === null || s.drikkere <= 0) m.push("antal kaffedrikkere");
+  }
   if (s.model === "min" && (s.kopper === null || s.kopper < 100)) m.push("minimumskopper pr. måned (minimum 100)");
   if (periodeForKort(s) || (!s.ingenper && (s.periode === null || !Number.isInteger(s.periode)))) m.push("aftaleperiode (minimum 12 måneder)");
   if (!s.mail) m.push("sælgers mailadresse");
@@ -626,6 +637,8 @@ function englishOfferHtml(html, s) {
     .replaceAll("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte.", "Billing is based on estimated consumption, calculated from the number of employees.")
     .replace(/Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ([\d.,]+) kopper pr\. md\. i forbindelse med årsopgørelsen\. Ligesom en varmeregning 🙂/g, (_m,cups) => "If you consume less than estimated, we refund the difference down to the " + cups + "-cup monthly minimum during the annual reconciliation – just like a utility bill. 🙂")
     .replaceAll("Faktureres ud fra estimeret forbrug.", "Invoiced based on estimated consumption.")
+    .replace(/Estimeret månedligt beløb \(kopper\): ([\d.,\[\]a-zA-Z]+) kr\. ekskl\. moms\./g, (_m, amount) => "Estimated monthly amount (cups): " + amount + " DKK excl. VAT.")
+    .replace(/Estimeret månedligt beløb \(kg\): ([\d.,\[\]a-zA-Z]+) kr\. ekskl\. moms\./g, (_m, amount) => "Estimated monthly amount (kg): " + amount + " DKK excl. VAT.")
     .replace(/Estimeret månedligt beløb: ([\d.,\[\]a-zA-Z]+) kr\. ekskl\. moms\./g, (_m, amount) => "Estimated monthly amount: " + amount + " DKK excl. VAT.")
     .replace(/Aftaleperiode: ([\d]+) (?:måned|måneder)\./g, (_m, months) => "Agreement term: " + months + " " + (Number(months) === 1 ? "month" : "months") + ".")
     .replace(/Aftaleperiode: \[antal\] måneder\./g, "Agreement term: [number] months.")
@@ -761,6 +774,8 @@ function swedishOfferHtml(html, s) {
     .replaceAll("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte.", "Faktureringen baseras på beräknad förbrukning utifrån antalet anställda.")
     .replace(new RegExp("Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til (" + numText + ") kopper pr\\. md\\. i forbindelse med årsopgørelsen\\. Ligesom en varmeregning 🙂", "g"), (_m,cups) => "Om ni dricker mindre än beräknat återbetalar vi mellanskillnaden ner till minimigränsen på " + cups + " koppar per månad vid årsavstämningen – ungefär som en värmeräkning. 🙂")
     .replaceAll("Faktureres ud fra estimeret forbrug.", "Faktureras utifrån beräknad förbrukning.")
+    .replace(new RegExp("Estimeret månedligt beløb \\(kopper\\): (" + numText + ") kr\\. ekskl\\. moms\\.", "g"), (_m,amount) => "Beräknat månadsbelopp (koppar): " + amount + " DKK exkl. moms.")
+    .replace(new RegExp("Estimeret månedligt beløb \\(kg\\): (" + numText + ") kr\\. ekskl\\. moms\\.", "g"), (_m,amount) => "Beräknat månadsbelopp (kg): " + amount + " DKK exkl. moms.")
     .replace(new RegExp("Estimeret månedligt beløb: (" + numText + ") kr\\. ekskl\\. moms\\.", "g"), (_m,amount) => "Beräknat månadsbelopp: " + amount + " DKK exkl. moms.")
     .replace(/Aftaleperiode: (\d+) (?:måned|måneder)\./g, (_m,months) => "Avtalstid: " + months + " " + (Number(months) === 1 ? "månad" : "månader") + ".")
     .replaceAll("Aftaleperiode: [antal] måneder.", "Avtalstid: [antal] månader.")
@@ -798,7 +813,8 @@ function swedishOfferHtml(html, s) {
 
 // Pristekster kan tilpasses pr. tilbudstype og sprog uden at ændre beregningerne.
 const priceTextOverrides = {};
-const priceTextGroup = (s) => s.type + ":" + s.sprog;
+const priceTextGroup = (s) => s.type + ":" + s.sprog +
+  (s.type === "maskine" ? ":" + s.model + (s.model === "fast" ? ":" + s.videresalgVisning : "") : "");
 function buildEmailWithPriceEdits(s) {
   const edits = priceTextOverrides[priceTextGroup(s)] || {};
   const html = buildEmail(s); // Oversæt standardtekster før evt. manuelle rettelser.
@@ -857,10 +873,21 @@ function buildEmail(s) {
   incl.push("installation", "fuld serviceaftale", "reservedele", "ombytning ved behov");
 
   const prisTxt = s.pris ? fmt2(s.pris) : "[Koppris]";
+  const kgprisTxt = s.videresalgKgpris ? fmt2(s.videresalgKgpris) : "[Pris]";
   const kopper = s.kopper ? Math.round(s.kopper).toLocaleString(offerLocale()) : "[antal]";
   const estimeret = s.estimeret !== null && s.estimeret > 0 ? s.estimeret.toLocaleString(offerLocale()) : "[antal]";
-  const aktivtAntal = s.model === "fast" ? s.estimeret : s.kopper;
-  const betaling = s.pris && aktivtAntal ? fmtKr(s.pris * aktivtAntal) : "[beløb]";
+  const betalingKopper = s.pris && s.estimeret ? fmtKr(s.pris * s.estimeret) : "[beløb]";
+  const betalingKg = s.videresalgKgpris && s.videresalgKg ? fmtKr(s.videresalgKgpris * s.videresalgKg) : "[beløb]";
+  const betaling = s.model === "fast"
+    ? s.videresalgVisning === "kg" ? betalingKg : betalingKopper
+    : s.pris && s.kopper ? fmtKr(s.pris * s.kopper) : "[beløb]";
+  const priser = s.model === "fast" && s.videresalgVisning === "kg"
+    ? [{ amount:kgprisTxt, unit:"pr. kg" }]
+    : s.model === "fast" && s.videresalgVisning === "begge"
+      ? [{ amount:prisTxt, unit:"pr. kop" }, { amount:kgprisTxt, unit:"pr. kg" }]
+      : [{ amount:prisTxt, unit:"pr. kop" }];
+  const prisOverskrift = priser.map(({amount,unit}, i) =>
+    `<tr><td bgcolor="#F6F1EA" style="background-color:#F6F1EA;padding:0 32px ${i === priser.length - 1 ? 12 : 4}px 32px;font-family:${HEADING_FONT};font-size:${priser.length > 1 ? 32 : 40}px;line-height:${priser.length > 1 ? 40 : 46}px;color:#2B1D14;">${amount} kr. <span style="font-size:18px;color:#4A3A2E;">${unit}</span></td></tr>`).join("");
   const modelLine = "Faktureres ud fra estimeret forbrug.";
   const mdr = s.periode !== null && s.periode > 0 ? Math.round(s.periode) : null;
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
@@ -885,7 +912,12 @@ function buildEmail(s) {
   } else {
     // Andre maskiner og videresalg: minimum er hele det estimerede forbrug; ingen årsregulering ned til 100 kopper.
     lines.push(priceLine(modelLine, !s.visMaanedspris && !periodeLine, "invoice"));
-    if (s.visMaanedspris) lines.push(priceLine(`Estimeret månedligt beløb: ${betaling} kr. ekskl. moms.`, !periodeLine, "monthly"));
+    if (s.visMaanedspris && s.model === "fast" && s.videresalgVisning === "begge") {
+      lines.push(priceLine(`Estimeret månedligt beløb (kopper): ${betalingKopper} kr. ekskl. moms.`, false, "monthly-cups"));
+      lines.push(priceLine(`Estimeret månedligt beløb (kg): ${betalingKg} kr. ekskl. moms.`, !periodeLine, "monthly-kg"));
+    } else if (s.visMaanedspris) {
+      lines.push(priceLine(`Estimeret månedligt beløb: ${betaling} kr. ekskl. moms.`, !periodeLine, "monthly"));
+    }
   }
   if (periodeLine) lines.push(priceLine(periodeLine, true, "term"));
 
@@ -931,7 +963,7 @@ ${h2("Service og drift", 32)}
 ${remoteSection}
 <tr><td style="padding:32px 40px 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F6F1EA" style="background-color:#F6F1EA;border:1px solid #DED3C5;">
 <tr><td bgcolor="#F6F1EA" style="background-color:#F6F1EA;padding:28px 32px 6px 32px;font-family:${FONT};font-size:15px;line-height:21px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:#6F4529;"><strong style="font-family:${FONT};font-size:15px;line-height:21px;font-weight:700;">Pris</strong></td></tr>
-<tr><td bgcolor="#F6F1EA" style="background-color:#F6F1EA;padding:0 32px 12px 32px;font-family:${HEADING_FONT};font-size:40px;line-height:46px;color:#2B1D14;">${prisTxt} kr. <span style="font-size:18px;color:#4A3A2E;">pr. kop</span></td></tr>
+${prisOverskrift}
 ${lines.join("\n")}
 </table></td></tr>
 `;
@@ -1023,7 +1055,7 @@ const EDITOR_LANG_LINES = [
   ["Estimeret antal kopper pr. måned","Beräknat antal koppar per månad","Estimated cups per month"],
   ["(bruges til koppris)","(används för pris per kopp)","(used for price per cup)"],
   ["Estimeret antal kg pr. måned","Beräknat antal kg per månad","Estimated kg per month"],
-  ["Kg angives særskilt og omregnes ikke automatisk til kopper. Antal kopper bruges til prisberegning og minimumsbetaling.","Kg anges separat och räknas inte automatiskt om till koppar. Antal koppar används för prisberäkning och minimidebitering.","Enter kg separately; it is not automatically converted into cups. Cups are used for pricing and the minimum charge."],
+  ["Kopper og kg har hver sin pris og sit forbrugsestimat. Der omregnes ikke automatisk mellem enhederne.","Koppar och kg har egna priser och förbrukningsuppskattningar. Ingen automatisk omräkning mellan enheterna.","Cups and kg have separate prices and consumption estimates. There is no automatic conversion between units."],
   ["(2 decimaler muligt)","(upp till 2 decimaler)","(up to 2 decimals)"],
   ["Estimeret forbrug:","Beräknad förbrukning:","Estimated consumption:"],
   ["1 kaffedrikker = 60 kopper pr. måned. Afrundes til hele kopper i tilbuddet.","1 kaffedrickare = 60 koppar per månad. Avrundas till hela koppar i offerten.","1 coffee drinker = 60 cups per month. Rounded to whole cups in the offer."],
@@ -1038,7 +1070,7 @@ const EDITOR_LANG_LINES = [
   ["Ved eget forbrug og/eller gratis uddeling samt brug af 1 Blackbird-maskine gælder et minimum på","Vid egen förbrukning och/eller gratis utdelning med 1 Blackbird-maskin gäller minst","For own consumption and/or free distribution using one Blackbird machine, the minimum is"],
   ["100 kopper pr. måned","100 koppar per månad","100 cups per month"],
   ["Ved videresalg, brug af mere end 1 maskine eller brug af en ikke-Blackbird-maskine gælder et minimum svarende til","Vid vidareförsäljning, fler än 1 maskin eller en annan maskin än Blackbirds gäller ett minimum motsvarande","For resale, more than one machine, or use of a non-Blackbird machine, the minimum equals"],
-  ["det estimerede forbrug i antal kopper","det beräknade antalet koppar","the estimated number of cups"],
+  ["det estimerede forbrug i den valgte afregningsenhed (kopper eller kg)","den beräknade förbrukningen i vald debiteringsenhet (koppar eller kg)","the estimated consumption in the selected billing unit (cups or kg)"],
   ["Minimumskopper pr. måned","Minsta antal koppar per månad","Minimum cups per month"],
   ["Pris pr. kg","Pris per kg","Price per kg"],
   ["Kg pr. måned","Kg per månad","Kg per month"],
@@ -1416,8 +1448,11 @@ function update() {
   const videresalg = !a && s.model === "fast";
   $("minimum-kopper").hidden = a || s.model !== "min";
   $("drikkere-field").hidden = videresalg;
+  $("koppris-field").hidden = videresalg && s.videresalgVisning === "kg";
+  $("kgpris-videresalg-field").hidden = !videresalg || s.videresalgVisning === "kopper";
   $("drikkere-estimat").hidden = videresalg;
   $("videresalg-forbrug").hidden = !videresalg;
+  $("videresalg-kopper-field").hidden = !videresalg || s.videresalgVisning === "kg";
   $("videresalg-kg-field").hidden = !videresalg || s.videresalgVisning === "kopper";
   // Ved videresalg er forbruget altid vist via kopper/kg-valget; checkboxen styrer kun månedsbeløbet.
   const monthlyLabel = videresalg ? "Vis estimeret månedligt beløb" : "Vis månedligt beløb og estimeret forbrug";
@@ -1552,6 +1587,7 @@ $("reset").addEventListener("click", () => {
   for (const group of Object.keys(priceTextOverrides)) delete priceTextOverrides[group];
   ["firma", "navn"].forEach((id) => { $(id).value = ""; });
   $("pris").value = "3,50";
+  $("videresalg-kgpris").value = "";
   $("drikkere").value = "10";
   $("videresalg-visning").value = "kopper";
   $("videresalg-kopper").value = "600";
