@@ -91,6 +91,12 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .estimat-box { padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:6px; font-size:14px; }
 .estimat-box strong { font-weight:700; }
 .estimat-box small { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
+/* Redigér tekstlinjer i prisboksen direkte i forhåndsvisningen. */
+#preview td[data-price-line][contenteditable="true"] { cursor:text; outline-offset:-2px; }
+#preview td[data-price-line][contenteditable="true"]:hover { box-shadow:inset 0 0 0 1px #CDA986; }
+#preview td[data-price-line][contenteditable="true"]:focus { outline:2px solid #B66A35; }
+#preview td[data-price-line][contenteditable="true"]:empty::before { content:"Skriv tekst her"; color:#9D8778; }
+@media print { #preview td[data-price-line] { outline:none !important; box-shadow:none !important; } }
 /* Intern vejledning til sælgeren; vises kun i formularen, aldrig i kundetilbuddet. */
 .betalings-info { padding:13px 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface); font-size:13px; line-height:1.6; color:var(--ink); }
 .betalings-info strong { display:block; margin-bottom:7px; font-size:13px; font-weight:700; }
@@ -294,7 +300,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <button type="button" class="primary" id="copy">Kopiér tilbud</button>
           <button type="button" class="secondary" id="copy-outlook">Kopiér + åbn Outlook</button>
           <button type="button" class="secondary" id="pdf">Eksportér PDF</button>
+          <button type="button" class="secondary" id="reset-price-text" hidden>Gendan pristekst</button>
         </div>
+        <p class="hint">Klik direkte på tekstlinjerne i prisboksen for at redigere dem. Dine ændringer kommer med ved kopiering og PDF-eksport; selve prisen beregnes stadig automatisk.</p>
         <p class="hint">“Kopiér + åbn Outlook” kopierer tilbuddet og åbner en ny mail med emnet udfyldt i dit standardmailprogram. Indsæt med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.</p>
       </div>
       <div class="previewwrap"><div id="preview"></div></div>
@@ -458,7 +466,7 @@ const para = (t, pad) => `<tr><td style="padding:${pad || "0 40px 0 40px"};font-
 const remotePara = (t, last = false) => `<tr><td style="padding:0 40px ${last ? 0 : 16}px 40px;font-family:${FONT};font-size:15px;line-height:26px;mso-line-height-rule:exactly;color:#4A3A2E;">${t}</td></tr>`;
 const bullet = (t) => `<tr><td width="30" valign="top" style="padding:3px 0 8px 0;"><img src="${IMG.bird}" width="18" height="19" alt="" style="display:block;border:0;"></td><td valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:15px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
 const checkBullet = (t) => `<tr><td width="30" valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:16px;line-height:22px;font-weight:bold;color:#6F4529;">&#10003;</td><td valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:15px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
-const priceLine =(t, last) => `<tr><td bgcolor="#F6F1EA" style="background-color:#F6F1EA;padding:0 32px ${last ? 28 : 8}px 32px;font-family:${FONT};font-size:14px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
+const priceLine =(t, last, key) => `<tr><td data-price-line="${key}" bgcolor="#F6F1EA" style="background-color:#F6F1EA;padding:0 32px ${last ? 28 : 8}px 32px;font-family:${FONT};font-size:14px;line-height:22px;color:#4A3A2E;">${t}</td></tr>`;
 
 function mainAftale(s) {
   const kg = (v) => v.toLocaleString(offerLocale(), { maximumFractionDigits: 1 });
@@ -469,10 +477,10 @@ function mainAftale(s) {
   const mdrTxt = mdr ? `${mdr} ${mdr === 1 ? "måned" : "måneder"}` : "[antal] måneder";
   const formater = FORMATER.filter((f) => s.formater.includes(f.id));
 
-  const txt = [`Prisen er beregnet ud fra en forventet aftagning på ${kgM} kg pr. måned.`];
-  if (s.levmin) txt.push(`Minimumsbestilling: ${Math.round(s.levmin)} ${Math.round(s.levmin) === 1 ? "levering" : "leveringer"} fordelt over et år.`);
-  if (!s.ingenper) txt.push(`Aftaleperiode: ${mdrTxt}.`);
-  const lines = txt.map((t, i) => priceLine(t, i === txt.length - 1)).join("\n");
+  const txt = [{ key:"kg-volume", text:`Prisen er beregnet ud fra en forventet aftagning på ${kgM} kg pr. måned.` }];
+  if (s.levmin) txt.push({ key:"kg-minimum", text:`Minimumsbestilling: ${Math.round(s.levmin)} ${Math.round(s.levmin) === 1 ? "levering" : "leveringer"} fordelt over et år.` });
+  if (!s.ingenper) txt.push({ key:"kg-term", text:`Aftaleperiode: ${mdrTxt}.` });
+  const lines = txt.map(({ text, key }, i) => priceLine(text, i === txt.length - 1, key)).join("\n");
 
   const kaffeTxt = "I kan frit skifte mellem alle vores kaffevarianter fra levering til levering.";
   const andre = s.kaffe.filter((k) => k !== "Early Bird");
@@ -768,6 +776,29 @@ function swedishOfferHtml(html, s) {
   return result.replace("Svar%20p%C3%A5%20tilbud", "Svar%20pa%20offerten");
 }
 
+// Pristekster kan tilpasses pr. tilbudstype og sprog uden at ændre beregningerne.
+const priceTextOverrides = {};
+const priceTextGroup = (s) => s.type + ":" + s.sprog;
+function buildEmailWithPriceEdits(s) {
+  const edits = priceTextOverrides[priceTextGroup(s)] || {};
+  const html = buildEmail(s); // Oversæt standardtekster før evt. manuelle rettelser.
+  return html.replace(/(<td\b[^>]*\bdata-price-line="([^"]+)"[^>]*>)([\s\S]*?)(<\/td>)/g,
+    (full, open, key, original, close) => Object.prototype.hasOwnProperty.call(edits, key)
+      ? open + esc(edits[key]).replace(/\r?\n/g, "<br>") + close : full);
+}
+function enablePriceEditing(s) {
+  const edits = priceTextOverrides[priceTextGroup(s)] || {};
+  for (const cell of $("preview").querySelectorAll("td[data-price-line]")) {
+    cell.contentEditable = "true";
+    cell.spellcheck = true;
+    cell.tabIndex = 0;
+    cell.setAttribute("role", "textbox");
+    cell.setAttribute("aria-multiline", "true");
+    cell.setAttribute("aria-label", "Redigér pristekst");
+    cell.title = "Klik og redigér teksten";
+  }
+  $("reset-price-text").hidden = Object.keys(edits).length === 0;
+}
 function buildEmail(s) {
   if (s.sprog === "sv") {
     const tokens = { firma:"__BB_COMPANY_SENTINEL__", navn:"__BB_CONTACT_SENTINEL__", intro:"__BB_INTRO_SENTINEL__" };
@@ -814,23 +845,23 @@ function buildEmail(s) {
   const mdr = s.periode !== null && s.periode > 0 ? Math.round(s.periode) : null;
   const periodeLine = s.ingenper ? null : mdr ? `Aftaleperiode: ${mdr} ${mdr === 1 ? "måned" : "måneder"}.` : "Aftaleperiode: [antal] måneder.";
 
-  const lines = [priceLine(`Prisen inkluderer ${joinOg(incl)}.`)];
+  const lines = [priceLine(`Prisen inkluderer ${joinOg(incl)}.`, false, "included")];
   if (s.drikkere) {
     const betegnelse = s.drikkere === 1 ? "kaffedrikker" : "kaffedrikkere";
-    if (s.visMaanedspris) lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`));
-    lines.push(priceLine(`Estimatet er lavet ud fra ${fmtAntal(s.drikkere)} ${betegnelse} som drikker 3 kopper i snit pr. arbejdsdag.`));
+    if (s.visMaanedspris) lines.push(priceLine(`Estimeret forbrug: ${estimeret} kopper pr. måned, baseret på ${fmtAntal(s.drikkere)} ${betegnelse}.`, false, "usage"));
+    lines.push(priceLine(`Estimatet er lavet ud fra ${fmtAntal(s.drikkere)} ${betegnelse} som drikker 3 kopper i snit pr. arbejdsdag.`, false, "assumptions"));
   }
   if (s.model === "min" && enheder.length === 1 && erBlackbirdMaskine(enheder[0].maskine)) {
     const minimumPris = s.visMaanedspris ? ` (${betaling} kr. pr. måned)` : "";
-    lines.push(priceLine(`Med vores nye koncept betaler I for jeres faktiske forbrug - dog med en minimumsbetaling svarende til ${kopper} kopper om måneden${minimumPris}.`));
-    lines.push(priceLine("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte."));
-    lines.push(priceLine(`Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ${kopper} kopper pr. md. i forbindelse med årsopgørelsen. Ligesom en varmeregning 🙂`, !periodeLine));
+    lines.push(priceLine(`Med vores nye koncept betaler I for jeres faktiske forbrug - dog med en minimumsbetaling svarende til ${kopper} kopper om måneden${minimumPris}.`, false, "min-payment"));
+    lines.push(priceLine("Der faktureres ud fra estimeret forbrug, baseret på antal ansatte.", false, "billing"));
+    lines.push(priceLine(`Hvis I drikker mindre end estimeret, tilbagebetaler vi differencen ned til ${kopper} kopper pr. md. i forbindelse med årsopgørelsen. Ligesom en varmeregning 🙂`, !periodeLine, "reconcile"));
   } else {
     // Andre maskiner og videresalg: minimum er hele det estimerede forbrug; ingen årsregulering ned til 100 kopper.
-    lines.push(priceLine(modelLine, !s.visMaanedspris && !periodeLine));
-    if (s.visMaanedspris) lines.push(priceLine(`Estimeret månedligt beløb: ${betaling} kr. ekskl. moms.`, !periodeLine));
+    lines.push(priceLine(modelLine, !s.visMaanedspris && !periodeLine, "invoice"));
+    if (s.visMaanedspris) lines.push(priceLine(`Estimeret månedligt beløb: ${betaling} kr. ekskl. moms.`, !periodeLine, "monthly"));
   }
-  if (periodeLine) lines.push(priceLine(periodeLine, true));
+  if (periodeLine) lines.push(priceLine(periodeLine, true, "term"));
 
   const machineRow = flereMaskiner
     ? enheder.map((cfg, i) => {
@@ -995,6 +1026,8 @@ const EDITOR_LANG_LINES = [
   ["Kopiér tilbud","Kopiera offert","Copy offer"],
   ["Kopiér + åbn Outlook","Kopiera + öppna Outlook","Copy + open Outlook"],
   ["Eksportér PDF","Exportera PDF","Export PDF"],
+  ["Gendan pristekst","Återställ pristexter","Restore price text"],
+  ["Klik direkte på tekstlinjerne i prisboksen for at redigere dem. Dine ændringer kommer med ved kopiering og PDF-eksport; selve prisen beregnes stadig automatisk.","Klicka direkt på textraderna i prisrutan för att redigera dem. Dina ändringar följer med vid kopiering och PDF-export; priset beräknas fortfarande automatiskt.","Click directly on the text lines in the price box to edit them. Your changes are included when copying or exporting a PDF; the price is still calculated automatically."],
   ["“Kopiér + åbn Outlook” kopierer tilbuddet og åbner en ny mail med emnet udfyldt i dit standardmailprogram. Indsæt med Ctrl+V (Windows) eller Cmd+V (Mac). PDF åbner udskriftsvinduet – vælg “Gem som PDF”.","”Kopiera + öppna Outlook” kopierar offerten och öppnar ett nytt mejl med ifylld ämnesrad. Klistra in med Ctrl+V (Windows) eller Cmd+V (Mac). För PDF väljer du ”Spara som PDF” i utskriftsfönstret.","“Copy + open Outlook” copies the offer and opens a new email with the subject filled in. Paste with Ctrl+V (Windows) or Cmd+V (Mac). For a PDF, choose “Save as PDF” in the print dialog."],
   ["Duplikér","Duplicera","Duplicate"],
   ["Fjern","Ta bort","Remove"],
@@ -1366,8 +1399,9 @@ document.querySelectorAll(".machine-card").forEach((card) => {
     warnings.forEach((warning) => { const li = document.createElement("li"); li.textContent = warning; list.appendChild(li); });
     warningBox.append(heading, list);
   }
-  $("preview").innerHTML = buildEmail(s);
+  $("preview").innerHTML = buildEmailWithPriceEdits(s);
   $("preview").lang = s.sprog;
+  enablePriceEditing(s);
   const miss = missing(s);
   const ready = miss.length === 0;
   $("copy").disabled = !ready;
@@ -1387,7 +1421,7 @@ function flash(text, kind) {
 // Brug derfor et HTML font-size-attribut som fallback i KUN den kopierede mail.
 // Behold de oprindelige tabeller, baggrunde og hele generatorens forhåndsvisning.
 async function copyRich() {
-  const html = buildEmail(read());
+  const html = buildEmailWithPriceEdits(read());
   const text = $("preview").innerText;
   try {
     if (navigator.clipboard && window.ClipboardItem) {
@@ -1427,6 +1461,24 @@ $("redigeringssprog").addEventListener("change", () => {
   if (Object.values(DEFAULT_INTROS).includes(intro.value)) intro.value = DEFAULT_INTROS[$("redigeringssprog").value];
   update();
 });
+$("preview").addEventListener("input", (event) => {
+  const cell = event.target.closest("td[data-price-line]");
+  if (!cell) return;
+  const group = priceTextGroup(read());
+  if (!priceTextOverrides[group]) priceTextOverrides[group] = {};
+  priceTextOverrides[group][cell.dataset.priceLine] = cell.innerText.replace(/\u00a0/g, " ");
+  $("reset-price-text").hidden = false;
+});
+// Indsæt kun ren tekst ved paste; HTML fra andre mails må ikke ændre prisboksens layout.
+$("preview").addEventListener("paste", (event) => {
+  if (!event.target.closest("td[data-price-line]")) return;
+  event.preventDefault();
+  document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
+});
+$("reset-price-text").addEventListener("click", () => {
+  delete priceTextOverrides[priceTextGroup(read())];
+  update();
+});
 $("copy").addEventListener("click", async () => {
   if (missing(read()).length) return;
   if (await copyRich()) flash("Tilbuddet er kopieret. Sæt det ind i en ny mail.", "ok");
@@ -1448,6 +1500,7 @@ $("pdf").addEventListener("click", () => {
   window.print(); // Vælg “Gem som PDF” i browserens udskriftsdialog.
 });
 $("reset").addEventListener("click", () => {
+  for (const group of Object.keys(priceTextOverrides)) delete priceTextOverrides[group];
   ["firma", "navn"].forEach((id) => { $(id).value = ""; });
   $("pris").value = "3,50";
   $("drikkere").value = "10";
